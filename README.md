@@ -9,5 +9,22 @@ Do you want to not care about whether you have underscores or dashes in your Rai
 
 If so, this library might be for you!
 
+Here is an example that simulates a conversation you might have upon meeting an extraterrestrial alien:
 
+```html
+  <!-- example.html -->
+  <div data-atv-controller="example", data-example-values="{greeting: 'We come in peace'}">
+    <p>Hello earthling!</p>
+    <button data-example-action="pressed">Greet me</button>
+    <p data-example-target="output"></p>
+  </div>
+```
+```js
+  // atv_example_controller.js
+  const activate = (targets, values) => {
+    pressed: () => {
+      targets.output.innerText = values.greeting;
+    }
+  };
 
+```
