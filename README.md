@@ -29,3 +29,5 @@ Here is an example that simulates a conversation you might have upon meeting an 
   export { activate };
 
 ```
+
+Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in particular the "action" declaration. Also note that in stimulus it is darn near impossible to use it at all without JavaScript "classes". With ATV you can use those if you want, but you don't have to.
