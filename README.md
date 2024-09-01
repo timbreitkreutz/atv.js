@@ -26,5 +26,6 @@ Here is an example that simulates a conversation you might have upon meeting an 
       targets.output.innerText = values.greeting;
     }
   };
+  export { activate };
 
 ```
