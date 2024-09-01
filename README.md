@@ -7,4 +7,7 @@ Do you just want to have actions, targets, and values available in your Rails JS
 Do you want to not care about whether you have underscores or dashes in your Rails JS data attributes in the HTML?
 
 
-If so, this library might be for you?
+If so, this library might be for you!
+
+
+
