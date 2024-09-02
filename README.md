@@ -16,7 +16,7 @@ Here is an example that simulates a conversation you might have upon meeting an 
 ```html
 <!-- greeting.html -->
 
-<div data-atv-controller="greeting", data-atv-greeting-values="<%= {greeting: 'We come in peace!'}.to_json %>">
+<div data-atv-controller="greeting" data-atv-greeting-values="<%= {greeting: 'We come in peace!'}.to_json %>">
   <p>Hello earthling!</p>
   <button data-atv-greeting-action="click">Greet me</button>
   <p data-atv-greeting-target="output"></p>
