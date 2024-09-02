@@ -14,25 +14,27 @@ If so, this library might be for you!
 Here is an example that simulates a conversation you might have upon meeting an extraterrestrial alien:
 
 ```html
-  <!-- example.html -->
-  <div data-atv-controller="example", data-example-values="{greeting: 'We come in peace'}">
-    <p>Hello earthling!</p>
-    <button data-example-action="click">Greet me</button>
-    <p data-example-target="output"></p>
-  </div>
+<!-- example.html -->
+<div data-atv-controller="greeting", data-atv-greeting-values="<%= {greeting: 'We come in peace!'}.to_json %>">
+  <p>Hello earthling!</p>
+  <button data-atv-greeting-action="click">Greet me</button>
+  <p data-atv-greeting-target="output"></p>
+</div>
 ```
 For the controller, all you need to provide is an `activate` method that take the targets, values, root element, and module.
 It needs to return a hash of action functions (which receive regular old DOM events).
 ```js
-  // atv_example_controller.js
+  // atv_greeting_controller.js
   const activate = (targets, values) => {
-    click: (event) => {
-      event.target.style.display = 'none'; // the button
-      targets.output.innerText = values.greeting; // the output paragraph
+    return {
+      click: (from) => {
+        from.style.display = 'none'; // the button
+        targets.output.innerText = values.greeting; // the output paragraph
+      }
     }
   };
-  export { activate };
 
+  export { activate };
 ```
 
 Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in particular the "action" declaration. Also note that in stimulus it is darn near impossible to use it at all without JavaScript "classes". With ATV you can use those if you want, but you don't have to.
