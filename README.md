@@ -19,11 +19,14 @@ Here is an example that simulates a conversation you might have upon meeting an 
     <p data-example-target="output"></p>
   </div>
 ```
+For the controller, all you need to provide is an `activate` method that take the targets, values, root element, and module.
+It needs to return a hash of action functions (which receive regular old DOM events).
 ```js
   // atv_example_controller.js
   const activate = (targets, values) => {
-    click: () => {
-      targets.output.innerText = values.greeting;
+    click: (event) => {
+      delete event.target; // the button
+      targets.output.innerText = values.greeting; // the output paragraph
     }
   };
   export { activate };
