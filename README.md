@@ -25,7 +25,7 @@ It needs to return a hash of action functions (which receive regular old DOM eve
   // atv_example_controller.js
   const activate = (targets, values) => {
     click: (event) => {
-      delete event.target; // the button
+      event.target.style.display = 'none'; // the button
       targets.output.innerText = values.greeting; // the output paragraph
     }
   };
