@@ -14,7 +14,8 @@ If so, this library might be for you!
 Here is an example that simulates a conversation you might have upon meeting an extraterrestrial alien:
 
 ```html
-<!-- example.html -->
+<!-- greeting.html -->
+
 <div data-atv-controller="greeting", data-atv-greeting-values="<%= {greeting: 'We come in peace!'}.to_json %>">
   <p>Hello earthling!</p>
   <button data-atv-greeting-action="click">Greet me</button>
@@ -24,7 +25,7 @@ Here is an example that simulates a conversation you might have upon meeting an 
 For the controller, all you need to provide is an `activate` method that take the targets, values, root element, and module.
 It needs to return a hash of action functions (which receive regular old DOM events).
 ```js
-  // atv_greeting_controller.js
+  // app/javascript/controllers/greeting_atv.js
   const activate = (targets, values) => {
     return {
       click: (from) => {
