@@ -38,4 +38,12 @@ It needs to return a hash of action functions (which receive regular old DOM eve
   export { activate };
 ```
 
+Finally, the following JS is required (typically in the application layout header) to activate it on your page
+```js
+  import { activate } from 'atv';
+
+  // Activate without default prefix of 'atv'
+  activate();
+```
+
 Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in particular the "action" declaration. Also note that in stimulus it is darn near impossible to use it at all without JavaScript "classes". With ATV you can use those if you want, but you don't have to.
