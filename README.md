@@ -42,7 +42,6 @@ Finally, the following JS is required (typically in the application layout heade
 ```js
   import { activate } from 'atv';
 
-  // Activate without default prefix of 'atv'
   activate();
 ```
 
