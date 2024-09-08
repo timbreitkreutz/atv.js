@@ -1,0 +1,25 @@
+{
+  "name": "@timbreitkreutz/atv",
+  "version": "0.0.1",
+  "description": "Classless JS framework for Rails",
+  "main": "atv.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timbreitkreutz/atv.js.git"
+  },
+  "keywords": [
+    "javascript",
+    "rails",
+    "server-rendered",
+    "stimulus"
+  ],
+  "author": "Timothy Breitkreutz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/timbreitkreutz/atv.js/issues"
+  },
+  "homepage": "https://sbrew.com/atv"
+}
