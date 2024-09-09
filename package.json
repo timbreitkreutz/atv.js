@@ -1,6 +1,6 @@
 {
   "name": "@timbreitkreutz/atv",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Classless JS framework for Rails",
   "main": "atv.js",
   "scripts": {
@@ -21,5 +21,9 @@
   "bugs": {
     "url": "https://github.com/timbreitkreutz/atv.js/issues"
   },
-  "homepage": "https://sbrew.com/atv"
+  "homepage": "https://sbrew.com/atv",
+  "module": "atv.js",
+  "files": [
+    "atv.js"
+  ]
 }

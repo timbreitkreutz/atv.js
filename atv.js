@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.1";
+const version = "0.0.3";
 
 // To dynamically load up the controller javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
