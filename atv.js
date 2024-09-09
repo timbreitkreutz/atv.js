@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.3";
+const version = "0.0.5";
 
 // To dynamically load up the controller javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -42,7 +42,7 @@ let allHandlers = [];
 // No more wasting time on guessing the permutation stimulus style!
 
 function pascalize(string) {
-   return string.split('-').map(str =>
+   return string.split(/[-_]/).map(str =>
       str.charAt(0).toUpperCase() + str.slice(1)
    ).join('');
 }
@@ -74,17 +74,21 @@ function querySelectorAll(container, selector, callback) {
 
    allPermutations(`data-${selector}`, (variant) => {
       container.querySelectorAll(`[${variant}]`).forEach((element) => {
-         const dataAttributeName = camelize(variant.replace("data", ""));
-         callback(element, dataAttributeName);
+         const dataAttributeName = camelize(variant.replace(/^data-/, ""));
+         callback(element, dataAttributeName, variant);
       });
    });
 }
 
 // Find all declared actions for this ATV controller and add listeners for them
 function findActions(container, controller, actionName, handler) {
-   querySelectorAll(container, `atv-${controller}-action`, (element, dataAttributeName) => {
+   querySelectorAll(container, `atv-${controller}-action`, (element, dataAttributeName, pattern) => {
       const actionDefinition = element.dataset[dataAttributeName];
+      if (!actionDefinition) {
+        return;
+      }
       let [eventName, definedActionName] = actionDefinition.split(/[-=]>/);
+
       if (!definedActionName) {
          definedActionName = eventName;
       }
