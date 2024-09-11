@@ -7,8 +7,6 @@
 // without "class" overhead and binding nonsense, just the actions, targets, and values
 // Also as underscore/hyphen indifferent as possible to ease the learning curve
 
-
-
 // The MIT License (MIT)
 
 // Copyright (c) 2024 Timothy Breitkreutz
@@ -31,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.5";
+const version = "0.0.6";
 
 // To dynamically load up the controller javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -87,7 +85,8 @@ function findActions(container, controller, actionName, handler) {
       if (!actionDefinition) {
         return;
       }
-      let [eventName, definedActionName] = actionDefinition.split(/[-=]>/);
+      const [action, args] = actionDefinition.split(/[()]/);
+      let [eventName, definedActionName] = action.split(/[-=]>/);
 
       if (!definedActionName) {
          definedActionName = eventName;
@@ -95,7 +94,7 @@ function findActions(container, controller, actionName, handler) {
       if (actionName !== definedActionName) {
          return;
       }
-      const callback = (event) => handler(event.target, event);  // Add more stuff to this if needed in the instances
+      const callback = (event) => handler(event.target, event, args?.split(","));  // Add more stuff to this if needed in the instances
       allHandlers.push([element, eventName, callback])
       element.addEventListener(eventName, callback);
    });
@@ -108,7 +107,16 @@ function findTargets(container, controller, pascalCase) {
    querySelectorAll(container, `atv-${controller}-target`, (element) => {
       const datasetKey = `atv${pascalCase}Target`;
       const key = element.dataset[datasetKey];
-      targets[key] = element;
+      const allKey = `all${pascalize(key)}`;
+
+      if (targets[allKey]) {
+         targets[allKey].push(element);
+      } else if (targets[key]) {
+         targets[allKey] = [targets[key], element];
+         delete targets[key];
+      } else {
+         targets[key] = element;
+      }
    });
 
    return targets;
@@ -140,9 +148,7 @@ function registerController(root) {
    const pascalCase = pascalize(name);
    const importmapName = `controllers/${name.replace(/-/g, '_')}_atv`;
 
-   const actualFile = importMap[importmapName];
-
-   import(actualFile)
+   import(importMap[importmapName])
       .then((module) => {
          const targets = findTargets(container, name, pascalCase);
          const values = findValues(container, name, pascalCase);
@@ -158,9 +164,9 @@ function registerController(root) {
 
 // This needs to be called when the DOM is loaded
 // TODO: Make idempotent so that we can also watch for new DOM arriving
-const activate = (prefix = "atv-") => {
+const activate = () => {
    querySelectorAll(document, "atv-controller", (element) => {
-      registerController(element, prefix)
+      registerController(element);
    })
 };
 
