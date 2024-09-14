@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.6";
+const version = "0.0.7";
 
 // To dynamically load up the controller javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -40,143 +40,160 @@ let allHandlers = [];
 // No more wasting time on guessing the permutation stimulus style!
 
 function pascalize(string) {
-   return string.split(/[-_]/).map(str =>
-      str.charAt(0).toUpperCase() + str.slice(1)
-   ).join('');
+  return string.split(/[-_]/).map(str =>
+     str.charAt(0).toUpperCase() + str.slice(1)
+  ).join('');
 }
 
 function camelize(string) {
-   const pascalized = pascalize(string);
-   return pascalized.charAt(0).toLowerCase() + pascalized.slice(1);
+  const pascalized = pascalize(string);
+  return pascalized.charAt(0).toLowerCase() + pascalized.slice(1);
 }
 
 function querySelectorAll(container, selector, callback) {
-   function allPermutations(name, permutation, prefix = null) {
-      const words = name.split(/[-_]/);
-      if (words.length < 2) {
-         if (prefix) {
-            permutation(`${prefix}-${name}`);
-            permutation(`${prefix}_${name}`);
-         } else {
-            permutation(name);
-         }
-         return;
-      }
-      if (prefix) {
-         allPermutations(words.slice(1).join('-'), permutation, `${prefix}-${words[0]}`)
-         allPermutations(words.slice(1).join('-'), permutation, `${prefix}_${words[0]}`)
-         return;
-      }
-      allPermutations(words.slice(1).join('-'), permutation, `${words[0]}`)
-   }
+  function allPermutations(name, permutation, prefix = null) {
+     const words = name.split(/[-_]/);
+     if (words.length < 2) {
+        if (prefix) {
+           permutation(`${prefix}-${name}`);
+           permutation(`${prefix}_${name}`);
+        } else {
+           permutation(name);
+        }
+        return;
+     }
+     if (prefix) {
+        allPermutations(words.slice(1).join('-'), permutation, `${prefix}-${words[0]}`)
+        allPermutations(words.slice(1).join('-'), permutation, `${prefix}_${words[0]}`)
+        return;
+     }
+     allPermutations(words.slice(1).join('-'), permutation, `${words[0]}`)
+  }
 
-   allPermutations(`data-${selector}`, (variant) => {
-      container.querySelectorAll(`[${variant}]`).forEach((element) => {
-         const dataAttributeName = camelize(variant.replace(/^data-/, ""));
-         callback(element, dataAttributeName, variant);
-      });
-   });
+  allPermutations(`data-${selector}`, (variant) => {
+     container.querySelectorAll(`[${variant}]`).forEach((element) => {
+        const dataAttributeName = camelize(variant.replace(/^data-/, ""));
+        callback(element, dataAttributeName, variant);
+     });
+  });
 }
 
 // Find all declared actions for this ATV controller and add listeners for them
 function findActions(container, controller, actionName, handler) {
-   querySelectorAll(container, `atv-${controller}-action`, (element, dataAttributeName, pattern) => {
-      const actionDefinition = element.dataset[dataAttributeName];
-      if (!actionDefinition) {
-        return;
-      }
-      const [action, args] = actionDefinition.split(/[()]/);
-      let [eventName, definedActionName] = action.split(/[-=]>/);
+  ['', 's'].forEach((plural) => {
+     // console.log(`atv-${controller}-action${plural}`)
+     querySelectorAll(container, `atv-${controller}-action${plural}`, (element, dataAttributeName, pattern) => {
+        const actionDefinitions = element.dataset[dataAttributeName];
+        if (!actionDefinitions) {
+           return;
+        }
+        // console.log(`FINDACTIONS1: ${actionDefinitions}`);
+        let array;
+        if (actionDefinitions.startsWith('[')) {
+           array = [JSON.parse(actionDefinitions)].flat();
+        } else {
+           array = [actionDefinitions];
+        }
 
-      if (!definedActionName) {
-         definedActionName = eventName;
-      }
-      if (actionName !== definedActionName) {
-         return;
-      }
-      const callback = (event) => handler(event.target, event, args?.split(","));  // Add more stuff to this if needed in the instances
-      allHandlers.push([element, eventName, callback])
-      element.addEventListener(eventName, callback);
-   });
+        // console.log(`FINDACTIONS2: ${array}`);
+        array.forEach((actionDefinition) => {
+           // console.log(actionDefinition);
+           const [action, args] = actionDefinition.split(/[()]/);
+           let [eventName, definedActionName] = action.split(/[-=]>/);
+
+           // console.log(`${eventName}/${definedActionName}`);
+
+           if (!definedActionName) {
+              definedActionName = eventName;
+           }
+           if (actionName !== definedActionName) {
+              return;
+           }
+           const callback = (event) => handler(event.target, event, args?.split(","));  // Add more stuff to this if needed in the instances
+           allHandlers.push([element, eventName, callback])
+           element.addEventListener(eventName, callback);
+        });
+     });
+  })
 }
 
 // Find all declared targets for this ATV controller and provide them to the controller instance
 function findTargets(container, controller, pascalCase) {
-   let targets = {};
+  let targets = {};
 
-   querySelectorAll(container, `atv-${controller}-target`, (element) => {
-      const datasetKey = `atv${pascalCase}Target`;
-      const key = element.dataset[datasetKey];
-      const allKey = `all${pascalize(key)}`;
+  querySelectorAll(container, `atv-${controller}-target`, (element) => {
+     const datasetKey = `atv${pascalCase}Target`;
+     const key = element.dataset[datasetKey];
+     const allKey = `all${pascalize(key)}`;
 
-      if (targets[allKey]) {
-         targets[allKey].push(element);
-      } else if (targets[key]) {
-         targets[allKey] = [targets[key], element];
-         delete targets[key];
-      } else {
-         targets[key] = element;
-      }
-   });
+     if (targets[allKey]) {
+        targets[allKey].push(element);
+     } else if (targets[key]) {
+        targets[allKey] = [targets[key], element];
+        delete targets[key];
+     } else {
+        targets[key] = element;
+     }
+  });
 
-   return targets;
+  return targets;
 }
 
 // Find the values data element and provide it to the controller instance
 // Assumption-- all values are in a single data declaration, JSON encoded as a hash
 function findValues(container, controller, pascalCase) {
-   let values;
+  let values;
 
-   querySelectorAll(container, `atv-${controller}-values`, (element) => {
-      if (values) {
-         return;
-      }
-      const datasetKey = `atv${pascalCase}Values`;
-      const data = element.dataset[datasetKey];
-      if (data) {
-         values = JSON.parse(data);
-      }
-   });
+  querySelectorAll(container, `atv-${controller}-values`, (element) => {
+     if (values) {
+        return;
+     }
+     const datasetKey = `atv${pascalCase}Values`;
+     const data = element.dataset[datasetKey];
+     if (data) {
+        values = JSON.parse(data);
+     }
+  });
 
-   return values;
+  return values;
 };
 
 // Gather the context for this instance, provide it to the controller instance
 function registerController(root) {
-   const name = root.dataset.atvController.replace(/_/g, '-');
-   const container = root.parentNode;
-   const pascalCase = pascalize(name);
-   const importmapName = `controllers/${name.replace(/-/g, '_')}_atv`;
+  const name = root.dataset.atvController.replace(/_/g, '-');
+  const container = root.parentNode;
+  const pascalCase = pascalize(name);
+  const importmapName = `controllers/${name.replace(/-/g, '_')}_atv`;
 
-   import(importMap[importmapName])
-      .then((module) => {
-         const targets = findTargets(container, name, pascalCase);
-         const values = findValues(container, name, pascalCase);
-         const callbacks = module.activate(targets, values, root, module);
-         Object.keys(callbacks).forEach((type) => {
-            findActions(container, name, type, callbacks[type]);
-         });
-      })
-      .catch(error => {
-         console.error('Loading failed:', error);
-      });
+  import(importMap[importmapName])
+     .then((module) => {
+        const targets = findTargets(container, name, pascalCase);
+        const values = findValues(container, name, pascalCase);
+        const callbacks = module.activate(targets, values, root, module);
+        Object.keys(callbacks).forEach((type) => {
+           findActions(container, name, type, callbacks[type]);
+        });
+     })
+     .catch(error => {
+        console.error('Loading failed:', error);
+     });
 }
 
 // This needs to be called when the DOM is loaded
 // TODO: Make idempotent so that we can also watch for new DOM arriving
 const activate = () => {
-   querySelectorAll(document, "atv-controller", (element) => {
-      registerController(element);
-   })
+  querySelectorAll(document, "atv-controller", (element) => {
+     registerController(element);
+  })
 };
 
 // In case someone has a SPA, remove all event listeners
 // TODO: use a better listener than "unload" when we go to Turbo land
 window.addEventListener("unload", () => {
-   allHandlers.forEach(([element, type, callback]) => {
-      element.removeEventListener(type, callback);
-   });
-   allHandlers = [];
+  allHandlers.forEach(([element, type, callback]) => {
+     element.removeEventListener(type, callback);
+  });
+  allHandlers = [];
 });
 
 export { activate };
