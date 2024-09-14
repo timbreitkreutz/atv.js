@@ -5,7 +5,7 @@
 Lightweight JavaScript for Rails inspired by Stimulus.js
 
 
-Do you just want to have actions, targets, and values available in your Rails JS controllers? Tired of messing around with `this` and `bind` and the other bad parts of Javascript?
+Do you just want to have actions, targets, and values available in your Rails JS controllers? Tired of messing around with `this` and `bind` and the other bad parts of JavaScript?
 
 Do you want to not care about whether you have underscores or dashes in your Rails JS data attributes in the HTML?
 
@@ -25,7 +25,7 @@ Here is an example that simulates a conversation you might have upon meeting an 
   <p data-atv-greeting-target="output"></p>
 </div>
 ```
-For the controller, all you need to provide is an `activate` method that take the targets, values, root element, and module.
+For the controller, all you need to provide is an `activate` method that receives the targets, values, root element, and module as arguments.
 It needs to return a hash of action functions (which receive regular old DOM events).
 ```js
   // app/javascript/controllers/greeting_atv.js
