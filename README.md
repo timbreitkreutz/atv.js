@@ -50,13 +50,17 @@ Finally, the following JS is required (typically in the application layout heade
 
 Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in particular the "action" declaration. Also note that in stimulus it is darn near impossible to use it at all without JavaScript "classes". With ATV you can use those if you want, but you don't have to.
 
+
+## Examples
+
+[ATV By Example](https://timbreitkreutz.github.io/atv.js/)
+
 ## Coming Soon!
 
 * Ability to notice new controllers appearing on the page with a DOM Mutation Observer
 * Disconnect callback (activation method itself is same as "connect")
 * Something like Outlets
 * Window events
-* Target arrays
 * More documentation!
 * And other things
 
