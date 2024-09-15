@@ -160,6 +160,7 @@ function findValues(container, name, pascalCase) {
 // Gather the context for this instance, provide it to the controller instance
 function registerController(root) {
   const container = root.parentNode;
+  // TODO: error handling here!
   root.dataset.atvController.replace(/_/g, '-').split(/[,\s]+/).forEach((input) => {
     const name = input.replace(/_/g, '-');
     const pascalCase = pascalize(name);
