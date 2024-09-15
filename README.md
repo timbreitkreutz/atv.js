@@ -30,12 +30,13 @@ It needs to return a hash of action functions (which receive regular old DOM eve
 ```js
   // app/javascript/controllers/greeting_atv.js
   const activate = (targets, values) => {
-    return {
-      click: (from) => {
-        from.style.display = 'none'; // the button
+    const actions = {
+      click: (actor) => {
+        actor.style.display = 'none'; // the button
         targets.output.innerText = values.greeting; // the output paragraph
       }
     }
+    return actions;
   };
 
   export { activate };
