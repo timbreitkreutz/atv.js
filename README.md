@@ -60,7 +60,13 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 * Ability to notice new controllers appearing on the page with a DOM Mutation Observer
 * Disconnect callback (activation method itself is same as "connect")
 * Something like Outlets
+* Ability to nest same controllers
+* Multi controllers per DOM element
 * Window events
 * More documentation!
 * And other things
 
+## Contributing
+
+ATV is still a very young project.
+This incarnation started afresh in August 2024 after a couple of previous sketches and prototypes were thrown out.
