@@ -64,9 +64,12 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 * Multi controllers per DOM element
 * Window events
 * More documentation!
+* Tests (right now I'm leveraging another private project for this)
 * And other things
 
 ## Contributing
 
 ATV is still a very young project.
 This incarnation started afresh in August 2024 after a couple of previous sketches and prototypes were thrown out.
+
+If you like this idea and want to help out please join or start a discussion here on the GitHub page. I'm looking for like minded rails fans who also are striving to do clean, minimalist JavaScript along the lines of Douglas Crockford (JavaScript--The Good Parts).
