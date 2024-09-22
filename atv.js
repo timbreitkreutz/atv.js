@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.9";
+const version = "0.0.10";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -78,18 +78,21 @@ function querySelectorAll(container, selector, callback) {
   });
 }
 
+function nestCheck(element, atv, name) {
+  const closestAtv = element.closest(`[data-atv-controller="${name}"`, `[data-atv-controller="${name.replace(/-/g, '_')}"]`);
+  // console.log(atv)
+  // console.log(closestAtv)
+  return (closestAtv !== atv);
+}
+
 // Find all declared actions for this ATV controller and add listeners for them
 function findActions(atv, name, actionName, handler) {
   function registerAction(element, definition) {
-    // console.log(element);
-    // console.log(`closest [data-atv-controller="${name}"] or [data-atv-controller="${name.replace(/-/g, '_')}"]`)
-    const closestAtv = element.closest(`[data-atv-controller="${name}"`, `[data-atv-controller="${name.replace(/-/g, '_')}"]`);
-    // console.log(atv)
-    // console.log(closestAtv)
-    if (closestAtv !== atv) {
-      // console.log("MISS")
+    if (nestCheck(element, atv, name)) {
       return;
     }
+    const closestAtv = element.closest(`[data-atv-controller="${name}"`, `[data-atv-controller="${name.replace(/-/g, '_')}"]`);
+
     const [action, args] = definition.split(/[()]/);
     let [eventName, definedActionName] = action.split(/[-=]>/);
 
@@ -128,10 +131,14 @@ function findActions(atv, name, actionName, handler) {
 }
 
 // Find all declared targets for this ATV and provide them to the ATV instance
-function findTargets(container, name, pascalCase) {
+function findTargets(atv, name, pascalCase) {
+  const container = atv.parentNode;
   let targets = {};
 
   querySelectorAll(container, `atv-${name}-target`, (element) => {
+    if (nestCheck(element, atv, name)) {
+      return;
+    }
     const datasetKey = `atv${pascalCase}Target`;
     const key = element.dataset[datasetKey];
     const allKey = `all${pascalize(key)}`;
@@ -151,11 +158,12 @@ function findTargets(container, name, pascalCase) {
 
 // Find the values data element and provide it to the ATV instance
 // Assumption-- all values are in a single data declaration, JSON encoded as a hash
-function findValues(container, name, pascalCase) {
+function findValues(atv, name, pascalCase) {
+  let container = atv.parentNode;
   let values;
 
   querySelectorAll(container, `atv-${name}-values`, (element) => {
-    if (values) {
+    if (values || nestCheck(element, atv, name)) {
       return;
     }
     const datasetKey = `atv${pascalCase}Values`;
@@ -170,7 +178,6 @@ function findValues(container, name, pascalCase) {
 
 // Gather the context for this instance, provide it to the controller instance
 function registerController(atv) {
-  const container = atv.parentNode;
   atv.dataset.atvController.replace(/_/g, '-').split(/[,\s]+/).forEach((input) => {
     const name = input.replace(/_/g, '-');
     // console.log(`RC: ${name}`);
@@ -185,8 +192,8 @@ function registerController(atv) {
     });
     import(importmapName)
       .then((module) => {
-        const targets = findTargets(container, name, pascalCase);
-        const values = findValues(container, name, pascalCase);
+        const targets = findTargets(atv, name, pascalCase);
+        const values = findValues(atv, name, pascalCase);
         let callbacks = module.activate(targets, values, atv, module);
         if (typeof callbacks === 'function') {
           // console.log("INVOKING FUNCTION")
