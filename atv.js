@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.10";
+const version = "0.0.11";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -78,25 +78,43 @@ function querySelectorAll(container, selector, callback) {
   });
 }
 
-function nestCheck(element, atv, name) {
-  const closestAtv = element.closest(`[data-atv-controller="${name}"`, `[data-atv-controller="${name.replace(/-/g, '_')}"]`);
-  // console.log(atv)
-  // console.log(closestAtv)
-  return (closestAtv !== atv);
+function controllersFor(element) {
+  let list;
+  if (element.dataset.atvController) {
+    list = element.dataset.atvController;
+  } else {
+    list = element.dataset.atv_controller;
+  }
+  if (list) {
+    return list.replace(/_/g, '-').split(/[,\s]+/);
+  } else {
+    return [];
+  }
+}
+
+// To allow for nesting controllers
+function inScope(element, atv, name) {
+  // There should only be one of these. Behavior undefined if it finds more than one permutation.
+  const closestAtv = element.closest("[data-atv-controller]", "[data-atv_controller]", "[data_atv-controller]", "[data_atv_controller]");
+  let inScope = false;
+  controllersFor(closestAtv).forEach((controller) => {
+    if (controller === name) {
+      inScope = !(closestAtv === atv);
+    }
+  })
+  return inScope;
 }
 
 // Find all declared actions for this ATV controller and add listeners for them
 function findActions(atv, name, actionName, handler) {
   function registerAction(element, definition) {
-    if (nestCheck(element, atv, name)) {
+    if (inScope(element, atv, name)) {
       return;
     }
     const closestAtv = element.closest(`[data-atv-controller="${name}"`, `[data-atv-controller="${name.replace(/-/g, '_')}"]`);
 
     const [action, args] = definition.split(/[()]/);
     let [eventName, definedActionName] = action.split(/[-=]>/);
-
-    // console.log(`${eventName}/${definedActionName}`);
 
     if (!definedActionName) {
       definedActionName = eventName;
@@ -110,8 +128,6 @@ function findActions(atv, name, actionName, handler) {
   }
 
   querySelectorAll(atv, `atv-${name}-action`, (element, dataAttributeName) => {
-    // console.log(`FIND ACTIONS ${dataAttributeName}`)
-    // console.log(element.dataset)
     const definition = element.dataset[dataAttributeName];
     if (definition) {
       registerAction(element, definition);
@@ -120,7 +136,6 @@ function findActions(atv, name, actionName, handler) {
   });
 
   querySelectorAll(atv, `atv-${name}-actions`, (element, dataAttributeName) => {
-    // console.log(`name ${name} data ${dataAttributeName}`);
     const definitions = element.dataset[dataAttributeName];
     if (definitions) {
       JSON.parse(definitions).forEach((definition) => {
@@ -136,7 +151,7 @@ function findTargets(atv, name, pascalCase) {
   let targets = {};
 
   querySelectorAll(container, `atv-${name}-target`, (element) => {
-    if (nestCheck(element, atv, name)) {
+    if (inScope(element, atv, name)) {
       return;
     }
     const datasetKey = `atv${pascalCase}Target`;
@@ -163,7 +178,7 @@ function findValues(atv, name, pascalCase) {
   let values;
 
   querySelectorAll(container, `atv-${name}-values`, (element) => {
-    if (values || nestCheck(element, atv, name)) {
+    if (values || inScope(element, atv, name)) {
       return;
     }
     const datasetKey = `atv${pascalCase}Values`;
@@ -178,16 +193,12 @@ function findValues(atv, name, pascalCase) {
 
 // Gather the context for this instance, provide it to the controller instance
 function registerController(atv) {
-  atv.dataset.atvController.replace(/_/g, '-').split(/[,\s]+/).forEach((input) => {
-    const name = input.replace(/_/g, '-');
-    // console.log(`RC: ${name}`);
-    // console.log(atv);
+  controllersFor(atv).forEach((name) => {
     const pascalCase = pascalize(name);
     let importmapName = `${name}_atv`;
     Object.keys(importMap).forEach((source) => {
       if (source.replace(/_/g, "-").includes(`${name}-atv`)) {
         importmapName = importMap[source];
-        // console.log(`MATCH ${source} => ${importmapName}`);
       }
     });
     import(importmapName)
@@ -196,10 +207,8 @@ function registerController(atv) {
         const values = findValues(atv, name, pascalCase);
         let callbacks = module.activate(targets, values, atv, module);
         if (typeof callbacks === 'function') {
-          // console.log("INVOKING FUNCTION")
           callbacks = callbacks();
         }
-        // console.log(callbacks);
         Object.keys(callbacks).forEach((type) => {
           findActions(atv, name, type, callbacks[type]);
         });
