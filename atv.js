@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.11";
+const version = "0.0.12";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -93,22 +93,22 @@ function controllersFor(element) {
 }
 
 // To allow for nesting controllers
-function inScope(element, atv, name) {
+function outOfScope(element, atv, name) {
   // There should only be one of these. Behavior undefined if it finds more than one permutation.
   const closestAtv = element.closest("[data-atv-controller]", "[data-atv_controller]", "[data_atv-controller]", "[data_atv_controller]");
-  let inScope = false;
+  let outOfScope = false;
   controllersFor(closestAtv).forEach((controller) => {
     if (controller === name) {
-      inScope = !(closestAtv === atv);
+      outOfScope = !(closestAtv === atv);
     }
   })
-  return inScope;
+  return outOfScope;
 }
 
 // Find all declared actions for this ATV controller and add listeners for them
 function findActions(atv, name, actionName, handler) {
   function registerAction(element, definition) {
-    if (inScope(element, atv, name)) {
+    if (outOfScope(element, atv, name)) {
       return;
     }
     const closestAtv = element.closest(`[data-atv-controller="${name}"`, `[data-atv-controller="${name.replace(/-/g, '_')}"]`);
@@ -151,7 +151,7 @@ function findTargets(atv, name, pascalCase) {
   let targets = {};
 
   querySelectorAll(container, `atv-${name}-target`, (element) => {
-    if (inScope(element, atv, name)) {
+    if (outOfScope(element, atv, name)) {
       return;
     }
     const datasetKey = `atv${pascalCase}Target`;
@@ -178,7 +178,7 @@ function findValues(atv, name, pascalCase) {
   let values;
 
   querySelectorAll(container, `atv-${name}-values`, (element) => {
-    if (values || inScope(element, atv, name)) {
+    if (values || outOfScope(element, atv, name)) {
       return;
     }
     const datasetKey = `atv${pascalCase}Values`;
