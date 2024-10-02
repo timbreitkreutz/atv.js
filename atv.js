@@ -29,12 +29,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.12";
+const version = "0.0.14";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
 // To remember handlers so they can be removed before leaving the page
-let allHandlers = [];
+let atvRoots = new Map;
 
 // Allow for any permutation of underscores and dashes in the data parts of the DOM elements.
 // No more wasting time on guessing the permutation stimulus style!
@@ -93,22 +93,23 @@ function controllersFor(element) {
 }
 
 // To allow for nesting controllers
-function outOfScope(element, atv, name) {
+function outOfScope(element, root, name) {
   // There should only be one of these. Behavior undefined if it finds more than one permutation.
   const closestAtv = element.closest("[data-atv-controller]", "[data-atv_controller]", "[data_atv-controller]", "[data_atv_controller]");
   let outOfScope = false;
   controllersFor(closestAtv).forEach((controller) => {
     if (controller === name) {
-      outOfScope = !(closestAtv === atv);
+      outOfScope = !(closestAtv === root);
     }
   })
   return outOfScope;
 }
 
 // Find all declared actions for this ATV controller and add listeners for them
-function findActions(atv, name, actionName, handler) {
+function findActions(root, name, actionName, handler) {
+  let handlers = [];
   function registerAction(element, definition) {
-    if (outOfScope(element, atv, name)) {
+    if (outOfScope(element, root, name)) {
       return;
     }
     const closestAtv = element.closest(`[data-atv-controller="${name}"`, `[data-atv-controller="${name.replace(/-/g, '_')}"]`);
@@ -123,11 +124,11 @@ function findActions(atv, name, actionName, handler) {
       return;
     }
     const callback = (event) => handler(event.target, event, args?.split(",")); // Add more stuff to this if needed in the instances
-    allHandlers.push([element, eventName, callback])
+    handlers.push([element, eventName, callback]);
     element.addEventListener(eventName, callback);
   }
 
-  querySelectorAll(atv, `atv-${name}-action`, (element, dataAttributeName) => {
+  querySelectorAll(root, `atv-${name}-action`, (element, dataAttributeName) => {
     const definition = element.dataset[dataAttributeName];
     if (definition) {
       registerAction(element, definition);
@@ -135,7 +136,7 @@ function findActions(atv, name, actionName, handler) {
     // TODO: else error
   });
 
-  querySelectorAll(atv, `atv-${name}-actions`, (element, dataAttributeName) => {
+  querySelectorAll(root, `atv-${name}-actions`, (element, dataAttributeName) => {
     const definitions = element.dataset[dataAttributeName];
     if (definitions) {
       JSON.parse(definitions).forEach((definition) => {
@@ -143,15 +144,16 @@ function findActions(atv, name, actionName, handler) {
       });
     } // TODO: else error
   });
+  return handlers;
 }
 
 // Find all declared targets for this ATV and provide them to the ATV instance
-function findTargets(atv, name, pascalCase) {
-  const container = atv.parentNode;
+function findTargets(root, name, pascalCase) {
+  const container = root.parentNode;
   let targets = {};
 
   querySelectorAll(container, `atv-${name}-target`, (element) => {
-    if (outOfScope(element, atv, name)) {
+    if (outOfScope(element, root, name)) {
       return;
     }
     const datasetKey = `atv${pascalCase}Target`;
@@ -173,12 +175,12 @@ function findTargets(atv, name, pascalCase) {
 
 // Find the values data element and provide it to the ATV instance
 // Assumption-- all values are in a single data declaration, JSON encoded as a hash
-function findValues(atv, name, pascalCase) {
-  let container = atv.parentNode;
+function findValues(root, name, pascalCase) {
+  let container = root.parentNode;
   let values;
 
   querySelectorAll(container, `atv-${name}-values`, (element) => {
-    if (values || outOfScope(element, atv, name)) {
+    if (values || outOfScope(element, root, name)) {
       return;
     }
     const datasetKey = `atv${pascalCase}Values`;
@@ -191,10 +193,29 @@ function findValues(atv, name, pascalCase) {
   return values;
 };
 
+function createController(root, name, module) {
+  let controller = {
+    root: root,
+    actions: {}
+  }
+  const pascalCase = pascalize(name);
+
+  controller.targets = findTargets(root, name, pascalCase);
+  controller.values = findValues(root, name, pascalCase);
+  let callbacks = module.activate(controller.targets, controller.values, root, module);
+  if (typeof callbacks === 'function') {
+    callbacks = callbacks();
+  }
+  Object.keys(callbacks).forEach((type) => {
+    controller.actions[type] = findActions(root, name, type, callbacks[type]);
+  });
+
+  atvRoots.get(root).push(controller);
+}
+
 // Gather the context for this instance, provide it to the controller instance
-function registerController(atv) {
-  controllersFor(atv).forEach((name) => {
-    const pascalCase = pascalize(name);
+function registerController(root) {
+  controllersFor(root).forEach((name) => {
     let importmapName = `${name}_atv`;
     Object.keys(importMap).forEach((source) => {
       if (source.replace(/_/g, "-").includes(`${name}-atv`)) {
@@ -203,15 +224,7 @@ function registerController(atv) {
     });
     import(importmapName)
       .then((module) => {
-        const targets = findTargets(atv, name, pascalCase);
-        const values = findValues(atv, name, pascalCase);
-        let callbacks = module.activate(targets, values, atv, module);
-        if (typeof callbacks === 'function') {
-          callbacks = callbacks();
-        }
-        Object.keys(callbacks).forEach((type) => {
-          findActions(atv, name, type, callbacks[type]);
-        });
+        createController(root, name, module)
       })
       .catch(error => {
         console.error('Loading failed:', error);
@@ -219,22 +232,33 @@ function registerController(atv) {
   });
 }
 
+function cleanup() {
+  atvRoots.forEach((controllers) => {
+    controllers.forEach((controller) => {
+      const actions = controller.actions;
+      Object.keys(actions).forEach((action) => {
+        const tuples = actions[action];
+        tuples.forEach((tuple) => {
+          // console.log("removing event listener:")
+          // console.log(tuple);
+          tuple[0].removeEventListener(tuple[1], tuple[2]);
+        });
+      });
+    });
+  });
+  atvRoots = new Map;
+}
+
 // This needs to be called when the DOM is loaded
 // TODO: Make idempotent so that we can also watch for new DOM arriving
 const activate = () => {
-  querySelectorAll(document, "atv-controller", (element) => {
-    registerController(element);
+  cleanup();
+  querySelectorAll(document, "atv-controller", (root) => {
+    atvRoots.set(root, []);
+    registerController(root);
   })
 };
 
-// In case someone has a SPA, remove all event listeners
-// TODO: use a better listener than "unload" when we go to Turbo land
-window.addEventListener("unload", () => {
-  allHandlers.forEach(([element, type, callback]) => {
-    element.removeEventListener(type, callback);
-  });
-  allHandlers = [];
-});
 
 export {
   activate

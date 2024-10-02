@@ -61,8 +61,6 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 * Ability to notice new controllers appearing on the page with a DOM Mutation Observer
 * Disconnect callback (activation method itself is same as "connect")
 * Something like Outlets
-* Ability to nest same controllers
-* Multi controllers per DOM element
 * Window events
 * More documentation!
 * Tests (right now I'm leveraging another private project for this)
