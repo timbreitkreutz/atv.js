@@ -237,11 +237,11 @@ function cleanup() {
     controllers.forEach((controller) => {
       const actions = controller.actions;
       Object.keys(actions).forEach((action) => {
-        const tuples = actions[action];
-        tuples.forEach((tuple) => {
+        const handlers = actions[action];
+        handlers.forEach((handler) => {
           // console.log("removing event listener:")
-          // console.log(tuple);
-          tuple[0].removeEventListener(tuple[1], tuple[2]);
+          // console.log(handler);
+          handler[0].removeEventListener(handler[1], handler[2]);
         });
       });
     });
