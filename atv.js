@@ -95,11 +95,11 @@ function controllersFor(element) {
 // To allow for nesting controllers
 function outOfScope(element, root, name) {
   // There should only be one of these. Behavior undefined if it finds more than one permutation.
-  const closestAtv = element.closest("[data-atv-controller]", "[data-atv_controller]", "[data_atv-controller]", "[data_atv_controller]");
+  const closestRoot = element.closest("[data-atv-controller]", "[data-atv_controller]", "[data_atv-controller]", "[data_atv_controller]");
   let outOfScope = false;
-  controllersFor(closestAtv).forEach((controller) => {
+  controllersFor(closestRoot).forEach((controller) => {
     if (controller === name) {
-      outOfScope = !(closestAtv === root);
+      outOfScope = !(closestRoot === root);
     }
   })
   return outOfScope;
@@ -112,7 +112,6 @@ function findActions(root, name, actionName, handler) {
     if (outOfScope(element, root, name)) {
       return;
     }
-    const closestAtv = element.closest(`[data-atv-controller="${name}"`, `[data-atv-controller="${name.replace(/-/g, '_')}"]`);
 
     const [action, args] = definition.split(/[()]/);
     let [eventName, definedActionName] = action.split(/[-=]>/);
@@ -258,7 +257,6 @@ const activate = () => {
     registerController(root);
   })
 };
-
 
 export {
   activate
