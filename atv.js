@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.14";
+const version = "0.0.15";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -201,7 +201,7 @@ function createController(root, name, module) {
 
   controller.targets = findTargets(root, name, pascalCase);
   controller.values = findValues(root, name, pascalCase);
-  let callbacks = module.activate(controller.targets, controller.values, root, module);
+  let callbacks = module.connect(controller.targets, controller.values, root, module);
   if (typeof callbacks === 'function') {
     callbacks = callbacks();
   }
