@@ -29,7 +29,7 @@ For the controller, all you need to provide is an `activate` method that receive
 It needs to return a hash of action functions (which receive regular old DOM events).
 ```js
   // app/javascript/controllers/greeting_atv.js
-  const activate = (targets, values) => {
+  const connect = (targets, values) => {
     const actions = {
       click: (actor) => {
         actor.style.display = 'none'; // the button
@@ -39,7 +39,7 @@ It needs to return a hash of action functions (which receive regular old DOM eve
     return actions;
   };
 
-  export { activate };
+  export { connect };
 ```
 
 Finally, the following JS is required (typically in the application layout header) to activate it on your page
