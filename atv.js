@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.16";
+const version = "0.0.17";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -209,7 +209,6 @@ function createController(root, name, module) {
   }
   Object.keys(callbacks).forEach((type) => {
     if (type === "disconnect") {
-      // console.log("REGISTERING A DISCONNECTOR");
       controller.disconnect = callbacks[type];
     } else {
       controller.actions[type] = findActions(root, name, type, callbacks[type]);
@@ -239,22 +238,17 @@ function registerController(root) {
 }
 
 function cleanup() {
-  // console.log("CLEANUP CALLED")
   atvRoots.forEach((controllers) => {
     controllers.forEach((controller) => {
       const actions = controller.actions;
       Object.keys(actions).forEach((action) => {
         const handlers = actions[action];
         handlers.forEach((handler) => {
-          // console.log("removing event listener:")
-          // console.log(handler);
           handler[0].removeEventListener(handler[1], handler[2]);
         });
       });
-      // console.log("DISCONNETING?")
 
       if (controller.disconnect) {
-        // console.log("DISCONNETING!")
         controller.disconnect();
         controller.disconnect = undefined;
       }
@@ -263,35 +257,28 @@ function cleanup() {
   atvRoots = new Map;
 }
 
-let activating = false;
+let activated = false;
 
-// DOM watcher
 const domChanged = (mutationList, _observer) => {
-  if (activating) {
+  if (!activated) {
     return;
   }
-  // console.log("DOM CHANGED")
   let atvRemoved = false;
   let nodesAdded = new Set;
   for (const mutation of mutationList) {
-    // console.log(mutation);
     if (mutation.type === "childList") {
       mutation.removedNodes.forEach((node) => {
-        // console.log(node)
-        // console.log(node.parentNode)
         if (atvRemoved || !node.querySelector) {
           return;
         }
         if (node.dataset) {
           if (node.dataset.atvController || node.dataset.atv_controller) {
-            // console.log("AN ATV ITSELF HAS BEEN REMOVED")
             atvRemoved = true;
             return;
           }
         }
         const atv = node.querySelector(atvControllerSelector);
         if (atv) {
-          // console.log("AN EMBEDDED ATV HAS BEEN REMOVED")
           atvRemoved = true;
           return;
         }
@@ -303,45 +290,43 @@ const domChanged = (mutationList, _observer) => {
         if (atvRemoved || !node.parentNode?.querySelector) {
           return;
         }
-        // console.log(node)
-        // console.log(node.parentNode)
         const atv = node.parentNode.querySelector(atvControllerSelector);
         if (atv) {
-          // console.log("AN ATV HAS BEEN ADDED")
           nodesAdded.add(node);
         }
       })
     }
   }
   if (atvRemoved) {
-    // console.log("RELOADING ATV")
-    activate();
+    activate(true);
     return;
   }
   nodesAdded.forEach((node) => {
-    // console.log("ADD ME");
-    // console.log(node);
     registerController(node);
   });
 };
 const observer = new MutationObserver(domChanged);
 const config = { childList: true, subtree: true };
-observer.observe(document, config);
 
-const activate = () => {
-  // console.log("ACTIVATING!", activating)
-  if (activating) {
+let domWatcherActive = false;
+
+const activate = (reactivate = false) => {
+  if (reactivate) {
+    activated = false;
+    cleanup();
+  } else if (activated) {
     return;
   }
-  activating = true;
-  cleanup();
   document.querySelectorAll(atvControllerSelector).forEach((root) => {
     atvRoots.set(root, []);
     registerController(root);
   })
   console.log(`ATV: ${atvRoots.size} DOM elements activated.`)
-  activating = false;
-  // console.log("FINISHED ACTIVATING")
+  activated = true;
+  if (!domWatcherActive) {
+    observer.observe(document, config);
+    domWatcherActive = true;
+  }
 };
 
 export {
