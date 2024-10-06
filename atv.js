@@ -296,6 +296,9 @@ const domChanged = (mutationList, _observer) => {
           return;
         }
       })
+      if (atvRemoved) {
+        break;
+      }
       mutation.addedNodes.forEach((node) => {
         if (atvRemoved || !node.parentNode?.querySelector) {
           return;
@@ -332,7 +335,7 @@ const activate = () => {
   }
   activating = true;
   cleanup();
-  querySelectorAll(document, "atv-controller", (root) => {
+  document.querySelectorAll(atvControllerSelector).forEach((root) => {
     atvRoots.set(root, []);
     registerController(root);
   })
