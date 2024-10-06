@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.15";
+const version = "0.0.16";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -92,10 +92,12 @@ function controllersFor(element) {
   }
 }
 
+const atvControllerSelector = "[data-atv-controller], [data-atv_controller], [data_atv-controller], [data_atv_controller]";
+
 // To allow for nesting controllers
 function outOfScope(element, root, name) {
   // There should only be one of these. Behavior undefined if it finds more than one permutation.
-  const closestRoot = element.closest("[data-atv-controller]", "[data-atv_controller]", "[data_atv-controller]", "[data_atv_controller]");
+  const closestRoot = element.closest(atvControllerSelector);
   let outOfScope = false;
   controllersFor(closestRoot).forEach((controller) => {
     if (controller === name) {
@@ -206,7 +208,12 @@ function createController(root, name, module) {
     callbacks = callbacks();
   }
   Object.keys(callbacks).forEach((type) => {
-    controller.actions[type] = findActions(root, name, type, callbacks[type]);
+    if (type === "disconnect") {
+      // console.log("REGISTERING A DISCONNECTOR");
+      controller.disconnect = callbacks[type];
+    } else {
+      controller.actions[type] = findActions(root, name, type, callbacks[type]);
+    }
   });
 
   atvRoots.get(root).push(controller);
@@ -232,6 +239,7 @@ function registerController(root) {
 }
 
 function cleanup() {
+  // console.log("CLEANUP CALLED")
   atvRoots.forEach((controllers) => {
     controllers.forEach((controller) => {
       const actions = controller.actions;
@@ -243,19 +251,94 @@ function cleanup() {
           handler[0].removeEventListener(handler[1], handler[2]);
         });
       });
+      // console.log("DISCONNETING?")
+
+      if (controller.disconnect) {
+        // console.log("DISCONNETING!")
+        controller.disconnect();
+        controller.disconnect = undefined;
+      }
     });
   });
   atvRoots = new Map;
 }
 
-// This needs to be called when the DOM is loaded
-// TODO: Make idempotent so that we can also watch for new DOM arriving
+let activating = false;
+
+// DOM watcher
+const domChanged = (mutationList, _observer) => {
+  if (activating) {
+    return;
+  }
+  // console.log("DOM CHANGED")
+  let atvRemoved = false;
+  let nodesAdded = new Set;
+  for (const mutation of mutationList) {
+    // console.log(mutation);
+    if (mutation.type === "childList") {
+      mutation.removedNodes.forEach((node) => {
+        // console.log(node)
+        // console.log(node.parentNode)
+        if (atvRemoved || !node.querySelector) {
+          return;
+        }
+        if (node.dataset) {
+          if (node.dataset.atvController || node.dataset.atv_controller) {
+            // console.log("AN ATV ITSELF HAS BEEN REMOVED")
+            atvRemoved = true;
+            return;
+          }
+        }
+        const atv = node.querySelector(atvControllerSelector);
+        if (atv) {
+          // console.log("AN EMBEDDED ATV HAS BEEN REMOVED")
+          atvRemoved = true;
+          return;
+        }
+      })
+      mutation.addedNodes.forEach((node) => {
+        if (atvRemoved || !node.parentNode?.querySelector) {
+          return;
+        }
+        // console.log(node)
+        // console.log(node.parentNode)
+        const atv = node.parentNode.querySelector(atvControllerSelector);
+        if (atv) {
+          // console.log("AN ATV HAS BEEN ADDED")
+          nodesAdded.add(node);
+        }
+      })
+    }
+  }
+  if (atvRemoved) {
+    // console.log("RELOADING ATV")
+    activate();
+    return;
+  }
+  nodesAdded.forEach((node) => {
+    // console.log("ADD ME");
+    // console.log(node);
+    registerController(node);
+  });
+};
+const observer = new MutationObserver(domChanged);
+const config = { childList: true, subtree: true };
+observer.observe(document, config);
+
 const activate = () => {
+  // console.log("ACTIVATING!", activating)
+  if (activating) {
+    return;
+  }
+  activating = true;
   cleanup();
   querySelectorAll(document, "atv-controller", (root) => {
     atvRoots.set(root, []);
     registerController(root);
   })
+  console.log(`ATV: ${atvRoots.size} DOM elements activated.`)
+  activating = false;
+  // console.log("FINISHED ACTIVATING")
 };
 
 export {
