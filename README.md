@@ -25,7 +25,7 @@ Here is an example that simulates a conversation you might have upon meeting an 
   <p data-atv-greeting-target="output"></p>
 </div>
 ```
-For the controller, all you need to provide is an `activate` method that receives the targets, values, root element, and module as arguments.
+For the controller, all you need to provide is an `connect` method that receives the targets, values, root element, and module as arguments.
 It needs to return a hash of action functions (which receive regular old DOM events).
 ```js
   // app/javascript/controllers/greeting_atv.js
