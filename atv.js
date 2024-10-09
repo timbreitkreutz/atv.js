@@ -194,14 +194,33 @@ function findValues(root, name, pascalCase) {
   });
 
   return values;
-};
+}
+
+function cleanupController(controllers, name) {
+  const controller = controllers[name];
+  const actions = controller.actions;
+  Object.keys(actions).forEach((action) => {
+    const handlers = actions[action];
+    handlers.forEach((handler) => {
+      handler[0].removeEventListener(handler[1], handler[2]);
+    });
+  });
+
+  if (controller.disconnect) {
+    controller.disconnect();
+    controller.disconnect = undefined;
+  }
+}
 
 function createController(root, name, module) {
   let controllers = atvRoots.get(root);
   if (!controllers) {
     controllers = {};
   }
-  
+  if (controllers[name]) {
+    cleanupController(controllers, name);
+  }
+
   let controller = {
     root: root,
     name: name,
@@ -256,19 +275,7 @@ function registerController(root) {
 function cleanup() {
   atvRoots.forEach((controllers) => {
     Object.keys(controllers).forEach((name) => {
-      const controller = controllers[name];
-      const actions = controller.actions;
-      Object.keys(actions).forEach((action) => {
-        const handlers = actions[action];
-        handlers.forEach((handler) => {
-          handler[0].removeEventListener(handler[1], handler[2]);
-        });
-      });
-
-      if (controller.disconnect) {
-        controller.disconnect();
-        controller.disconnect = undefined;
-      }
+      cleanupController(controllers, name);
     });
   });
   atvRoots = new Map;
@@ -276,7 +283,7 @@ function cleanup() {
 
 let activated = false;
 
-const domChanged = (mutationList, _observer) => {
+function domWatcher(mutationList, _observer) {
   // console.log("DOMCHANGE")
   if (!activated) {
     return;
@@ -329,11 +336,10 @@ const domChanged = (mutationList, _observer) => {
   nodesAdded.forEach((node) => {
     registerController(node);
   });
-  console.log(`ATV: ${atvRoots.size} DOM elements activated. (domChanged)`)
-};
-const observer = new MutationObserver(domChanged);
+  console.log(`ATV: ${atvRoots.size} DOM elements activated. (domWatcher)`)
+}
+const observer = new MutationObserver(domWatcher);
 const config = { childList: true, subtree: true };
-
 let domWatcherActive = false;
 
 const activate = (reactivate = false) => {
