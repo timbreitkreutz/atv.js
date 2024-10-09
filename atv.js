@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.17";
+const version = "0.0.18";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -80,10 +80,12 @@ function querySelectorAll(container, selector, callback) {
 
 function controllersFor(element) {
   let list;
-  if (element.dataset.atvController) {
-    list = element.dataset.atvController;
-  } else {
-    list = element.dataset.atv_controller;
+  if (element.dataset) {
+    if (element.dataset.atvController) {
+      list = element.dataset.atvController;
+    } else {
+      list = element.dataset.atv_controller;
+    }
   }
   if (list) {
     return list.replace(/_/g, '-').split(/[,\s]+/);
@@ -195,8 +197,14 @@ function findValues(root, name, pascalCase) {
 };
 
 function createController(root, name, module) {
+  let controllers = atvRoots.get(root);
+  if (!controllers) {
+    controllers = {};
+  }
+  
   let controller = {
     root: root,
+    name: name,
     actions: {}
   }
   const pascalCase = pascalize(name);
@@ -215,15 +223,23 @@ function createController(root, name, module) {
     }
   });
 
-  atvRoots.get(root).push(controller);
+  // console.log("IN")
+  // console.log(atvRoots);
+  // console.log(root);
+  // console.log(controller)
+
+  controllers[name] = controller;
+  atvRoots.set(root, controllers);
 }
 
 // Gather the context for this instance, provide it to the controller instance
 function registerController(root) {
+  // console.log(root);
+
   controllersFor(root).forEach((name) => {
     let importmapName = `${name}_atv`;
     Object.keys(importMap).forEach((source) => {
-      if (source.replace(/_/g, "-").includes(`${name}-atv`)) {
+      if (source.replace(/_/g, "-").includes(`/${name}-atv`)) {
         importmapName = importMap[source];
       }
     });
@@ -239,7 +255,8 @@ function registerController(root) {
 
 function cleanup() {
   atvRoots.forEach((controllers) => {
-    controllers.forEach((controller) => {
+    Object.keys(controllers).forEach((name) => {
+      const controller = controllers[name];
       const actions = controller.actions;
       Object.keys(actions).forEach((action) => {
         const handlers = actions[action];
@@ -260,6 +277,7 @@ function cleanup() {
 let activated = false;
 
 const domChanged = (mutationList, _observer) => {
+  // console.log("DOMCHANGE")
   if (!activated) {
     return;
   }
@@ -287,23 +305,31 @@ const domChanged = (mutationList, _observer) => {
         break;
       }
       mutation.addedNodes.forEach((node) => {
+        // console.log(node);
+        // console.log(node.parentNode);
         if (atvRemoved || !node.parentNode?.querySelector) {
           return;
         }
         const atv = node.parentNode.querySelector(atvControllerSelector);
+        // console.log(atv);
+        // console.log(atvControllerSelector);
         if (atv) {
           nodesAdded.add(node);
         }
       })
     }
   }
+  // console.log(atvRemoved);
+  // console.log(nodesAdded);
   if (atvRemoved) {
     activate(true);
     return;
   }
+  // console.log(atvRoots);
   nodesAdded.forEach((node) => {
     registerController(node);
   });
+  console.log(`ATV: ${atvRoots.size} DOM elements activated. (domChanged)`)
 };
 const observer = new MutationObserver(domChanged);
 const config = { childList: true, subtree: true };
@@ -318,10 +344,9 @@ const activate = (reactivate = false) => {
     return;
   }
   document.querySelectorAll(atvControllerSelector).forEach((root) => {
-    atvRoots.set(root, []);
     registerController(root);
   })
-  console.log(`ATV: ${atvRoots.size} DOM elements activated.`)
+  console.log(`ATV: ${atvRoots.size} DOM elements activated. (activate)`)
   activated = true;
   if (!domWatcherActive) {
     observer.observe(document, config);

@@ -58,7 +58,6 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 
 ## Coming Soon!
 
-* Ability to notice new controllers appearing on the page with a DOM Mutation Observer
 * Something like Outlets
 * Window events
 * More documentation!
