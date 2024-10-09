@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.18";
+const version = "0.0.19";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -198,11 +198,11 @@ function findValues(root, name, pascalCase) {
 
 function cleanupController(controllers, name) {
   const controller = controllers[name];
-  const actions = controller.actions;
-  Object.keys(actions).forEach((action) => {
-    const handlers = actions[action];
-    handlers.forEach((handler) => {
-      handler[0].removeEventListener(handler[1], handler[2]);
+  const handlers = controller.handlers;
+  Object.keys(handlers).forEach((key) => {
+    const entries = handlers[key];
+    entries.forEach((entry) => {
+      entry[0].removeEventListener(entry[1], entry[2]);
     });
   });
 
@@ -210,6 +210,16 @@ function cleanupController(controllers, name) {
     controller.disconnect();
     controller.disconnect = undefined;
   }
+}
+
+function findControllers(selector, type, callback) {
+  document.querySelectorAll(selector).forEach((element) => {
+    const root = atvRoots.get(element);
+    // console.log(root);
+    if (root && root[type]) {
+      callback(root[type]);
+    }
+  });
 }
 
 function createController(root, name, module) {
@@ -224,21 +234,24 @@ function createController(root, name, module) {
   let controller = {
     root: root,
     name: name,
-    actions: {}
+    actions: {},
+    handlers: {}
   }
   const pascalCase = pascalize(name);
 
   controller.targets = findTargets(root, name, pascalCase);
   controller.values = findValues(root, name, pascalCase);
-  let callbacks = module.connect(controller.targets, controller.values, root, module);
+  controller.actions
+  let callbacks = module.connect(controller.targets, controller.values, root, findControllers);
   if (typeof callbacks === 'function') {
     callbacks = callbacks();
   }
   Object.keys(callbacks).forEach((type) => {
+    controller.actions[type] = callbacks[type];
     if (type === "disconnect") {
       controller.disconnect = callbacks[type];
     } else {
-      controller.actions[type] = findActions(root, name, type, callbacks[type]);
+      controller.handlers[type] = findActions(root, name, type, callbacks[type])
     }
   });
 
@@ -289,10 +302,11 @@ function domWatcher(mutationList, _observer) {
     return;
   }
   let atvRemoved = false;
-  let nodesAdded = new Set;
+  let nodeToRegister = new Set;
   for (const mutation of mutationList) {
     if (mutation.type === "childList") {
       mutation.removedNodes.forEach((node) => {
+        // console.log("REMOVED")
         if (atvRemoved || !node.querySelector) {
           return;
         }
@@ -312,34 +326,51 @@ function domWatcher(mutationList, _observer) {
         break;
       }
       mutation.addedNodes.forEach((node) => {
+        // console.log("ADD")
         // console.log(node);
         // console.log(node.parentNode);
-        if (atvRemoved || !node.parentNode?.querySelector) {
+        if (!node.parentNode?.querySelector) {
           return;
         }
         const atv = node.parentNode.querySelector(atvControllerSelector);
         // console.log(atv);
         // console.log(atvControllerSelector);
         if (atv) {
-          nodesAdded.add(node);
+          nodeToRegister.add(node);
         }
       })
     }
+    if (mutation.type === "attributes") {
+      // console.log("ATTR")
+      const attributeName = mutation.attributeName;
+      if (attributeName) {
+        if (/^data[-_]atv/i.test(attributeName)) {
+          // console.log(`mutation ${attributeName}`);
+          // console.log(mutation.target);
+          const node = mutation.target.closest(atvControllerSelector);
+          if (node) {
+            nodeToRegister.add(node);
+          }
+        }
+      }
+    }
   }
   // console.log(atvRemoved);
-  // console.log(nodesAdded);
+  // console.log(nodeToRegister);
   if (atvRemoved) {
     activate(true);
     return;
   }
   // console.log(atvRoots);
-  nodesAdded.forEach((node) => {
+  let addedCount = 0;
+  nodeToRegister.forEach((node) => {
     registerController(node);
+    addedCount += 1;
   });
-  console.log(`ATV: ${atvRoots.size} DOM elements activated. (domWatcher)`)
+  console.log(`ATV: ${atvRoots.size} DOM elements activated / ${addedCount} added. (activate)`)
 }
 const observer = new MutationObserver(domWatcher);
-const config = { childList: true, subtree: true };
+const config = { attributes: true, childList: true, subtree: true };
 let domWatcherActive = false;
 
 const activate = (reactivate = false) => {
@@ -349,10 +380,12 @@ const activate = (reactivate = false) => {
   } else if (activated) {
     return;
   }
+  let addedCount = 0;
   document.querySelectorAll(atvControllerSelector).forEach((root) => {
     registerController(root);
+    addedCount += 1;
   })
-  console.log(`ATV: ${atvRoots.size} DOM elements activated. (activate)`)
+  console.log(`ATV: ${atvRoots.size} DOM elements activated / ${addedCount} added. (activate)`)
   activated = true;
   if (!domWatcherActive) {
     observer.observe(document, config);
