@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.19";
+const version = "0.0.20";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -94,7 +94,7 @@ function controllersFor(element) {
   }
 }
 
-const atvControllerSelector = "[data-atv-controller], [data-atv_controller], [data_atv-controller], [data_atv_controller]";
+const atvControllerSelector = "[data-atv-controller],[data-atv_controller],[data_atv-controller],[data_atv_controller]";
 
 // To allow for nesting controllers
 function outOfScope(element, root, name) {
@@ -107,6 +107,37 @@ function outOfScope(element, root, name) {
     }
   })
   return outOfScope;
+}
+
+function containingNamedController(element, name) {
+  // console.log(`LOOKING ${element} / ${name}`)
+  const closestRoot = element.closest(atvControllerSelector);
+  if (!closestRoot) {
+    return undefined;
+  }
+  // console.log(`closest ${closestRoot.dataset.atvController}`)
+  let foundRoot;
+  controllersFor(closestRoot).forEach((controller) => {
+    if (foundRoot) {
+      return;
+    }
+    // console.log(`controller found ${controller}`)
+    if (controller === name) {
+      foundRoot = closestRoot;
+      return;
+    }
+  });
+  if (foundRoot) {
+    return foundRoot;
+  }
+  return containingNamedController(closestRoot.parentNode, name);
+}
+
+function jsonParseArray(string) {
+  if (/^[\[{]/.test(string)) {
+    return JSON.parse(string);
+  }
+  return string.split(/[\s,]+/);
 }
 
 // Find all declared actions for this ATV controller and add listeners for them
@@ -142,10 +173,65 @@ function findActions(root, name, actionName, handler) {
   querySelectorAll(root, `atv-${name}-actions`, (element, dataAttributeName) => {
     const definitions = element.dataset[dataAttributeName];
     if (definitions) {
-      JSON.parse(definitions).forEach((definition) => {
+      jsonParseArray(definitions).forEach((definition) => {
         registerAction(element, definition);
       });
     } // TODO: else error
+  });
+
+  // sequences 
+  querySelectorAll(root, 'atv-actions', (element, dataAttributeName) => {
+    const invokeNext = (sequence) => {
+      return function(event) {
+        // console.log("EVENT", event);
+        const first = sequence[0];
+
+        if (!first) {
+          // console.log('Fin');
+          return;
+        }
+        const [controller, definition] = first.split("#");
+        const [action, args] = definition.split(/[()]/);
+        const definedActionName = action.split(/[-=]>/).at(-1);
+
+        const atvControllerElement = containingNamedController(event.target, controller);
+        // console.log(`containing controller: ${atvControllerElement} for ${definition} `);
+        // console.log(`attempting ${first}: ${definedActionName}`);
+        // console.log(atvRoots.get(atvControllerElement));
+
+        const actions = atvRoots.get(atvControllerElement)[controller]?.actions;
+        if (actions) {
+          // console.log("FOUND ACTIONS", actions)
+          const func = actions[definedActionName];
+          if (func) {
+            // console.log("FOUND FUNCTION", func)
+            const result = func(event.target, event, args?.split(","));
+            // console.log(`RESULT: ${result}`)
+            if (result) {
+              const remainder = sequence.slice(1);
+              return invokeNext(remainder)(event);
+            }
+          }
+        }
+        return false;
+      };
+    };
+
+    const definitions = element.dataset[dataAttributeName];
+    // console.log(definitions);
+    const parsed = jsonParseArray(definitions);
+    if (definitions) {
+      const [firstController, definition] = parsed[0].split("#");
+      if (name !== firstController || outOfScope(element, root, name)) {
+        return;
+      }
+      const action = definition.split(/[()]/)[0];
+      const [eventName, definedActionName] = action.split(/[-=]>/);
+      // console.log(`FOUND--REGISTERING CALLBACK ${eventName}/${name} ${definedActionName}`)
+      const callback = invokeNext(parsed, );
+      handlers.push([element, eventName, callback]);
+      element.addEventListener(eventName, callback);
+    }
   });
   return handlers;
 }
@@ -235,7 +321,8 @@ function createController(root, name, module) {
     root: root,
     name: name,
     actions: {},
-    handlers: {}
+    handlers: {},
+    sequences: []
   }
   const pascalCase = pascalize(name);
 
