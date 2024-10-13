@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.21";
+const version = "0.0.22";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -137,17 +137,24 @@ let jsonParseArray = function(string) {
   return string.split(/[,]+/).map((str) => str.trim());
 };
 
-// Parses out list of "controller#requestedEvent->actionName(args)"
+// Parses out actions:
+// "requestedEvent->controller#actionName(args)" => requestedEvent, actionName, controller, args
+// "click" => click, click, null, null
 let parseActions = function(string) {
   const definitions = jsonParseArray(string);
   return definitions.map(function(definition) {
-    let [controller, fullAction] = definition.split("#");
+    let [requestedEvent, fullAction] = definition.split(/[-=]>/);
     if (!fullAction) {
-      fullAction = controller;
+      fullAction = requestedEvent;
+      requestedEvent = requestedEvent.split(/[#(),]/)[0];
+    }
+    console.log(definition, requestedEvent, fullAction);
+    let [controller, innerAction] = fullAction.split("#");
+    if (!innerAction) {
+      innerAction = controller;
       controller = undefined;
     }
-    let [action, args] = fullAction.split(/[()]/);
-    let [requestedEvent, actionName] = action.split(/[-=]>/);
+    let [actionName, args] = innerAction.split(/[()]/);
     if (!actionName) {
       actionName = requestedEvent;
     }
@@ -195,7 +202,7 @@ function findActions(root, name, actionName, handler) {
   });
 
   // sequences 
-  querySelectorAll(root, 'atv-actions', (element, dataAttributeName) => {
+  function buildSequence(element, dataAttributeName) {
     function invokeNext(sequence, forEvent) {
       return function(event) {
         // Complete condition
@@ -256,6 +263,12 @@ function findActions(root, name, actionName, handler) {
         element.addEventListener(forEvent, callback);
       }
     });
+  }
+  querySelectorAll(root, 'atv-actions', (element, dataAttributeName) => {
+    buildSequence(element, dataAttributeName);
+  });
+  querySelectorAll(root, 'atv-action', (element, dataAttributeName) => {
+    buildSequence(element, dataAttributeName);
   });
   return handlers;
 }
