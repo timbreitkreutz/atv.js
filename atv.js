@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.20";
+const version = "0.0.21";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;
@@ -110,18 +110,15 @@ function outOfScope(element, root, name) {
 }
 
 function containingNamedController(element, name) {
-  // console.log(`LOOKING ${element} / ${name}`)
   const closestRoot = element.closest(atvControllerSelector);
   if (!closestRoot) {
     return undefined;
   }
-  // console.log(`closest ${closestRoot.dataset.atvController}`)
   let foundRoot;
   controllersFor(closestRoot).forEach((controller) => {
     if (foundRoot) {
       return;
     }
-    // console.log(`controller found ${controller}`)
     if (controller === name) {
       foundRoot = closestRoot;
       return;
@@ -133,39 +130,59 @@ function containingNamedController(element, name) {
   return containingNamedController(closestRoot.parentNode, name);
 }
 
-function jsonParseArray(string) {
+let jsonParseArray = function(string) {
   if (/^[\[{]/.test(string)) {
     return JSON.parse(string);
   }
-  return string.split(/[\s,]+/);
+  return string.split(/[,]+/).map((str) => str.trim());
+};
+
+// Parses out list of "controller#requestedEvent->actionName(args)"
+let parseActions = function(string) {
+  const definitions = jsonParseArray(string);
+  return definitions.map(function(definition) {
+    let [controller, fullAction] = definition.split("#");
+    if (!fullAction) {
+      fullAction = controller;
+      controller = undefined;
+    }
+    let [action, args] = fullAction.split(/[()]/);
+    let [requestedEvent, actionName] = action.split(/[-=]>/);
+    if (!actionName) {
+      actionName = requestedEvent;
+    }
+    if (args) {
+      args = args.split(",")
+    }
+    return [requestedEvent, actionName, controller, args];
+  });
 }
 
 // Find all declared actions for this ATV controller and add listeners for them
 function findActions(root, name, actionName, handler) {
   let handlers = [];
-  function registerAction(element, definition) {
-    if (outOfScope(element, root, name)) {
-      return;
-    }
-
-    const [action, args] = definition.split(/[()]/);
-    let [eventName, definedActionName] = action.split(/[-=]>/);
-
-    if (!definedActionName) {
-      definedActionName = eventName;
-    }
-    if (actionName !== definedActionName) {
-      return;
-    }
-    const callback = (event) => handler(event.target, event, args?.split(",")); // Add more stuff to this if needed in the instances
-    handlers.push([element, eventName, callback]);
-    element.addEventListener(eventName, callback);
+  function registerAction(element, definitions) {
+    parseActions(definitions).forEach((definition) => {
+      const [requestedEvent, definedActionName, controller, args] = definition;
+      if (controller && controller !== name) {
+        return;
+      }
+      if (actionName !== definedActionName) {
+        return;
+      }
+      if (outOfScope(element, root, name)) {
+        return;
+      }
+      const callback = (event) => handler(event.target, event, args); // Add more stuff to this if needed in the instances
+      handlers.push([element, requestedEvent, callback]);
+      element.addEventListener(requestedEvent, callback);
+    });
   }
 
   querySelectorAll(root, `atv-${name}-action`, (element, dataAttributeName) => {
-    const definition = element.dataset[dataAttributeName];
-    if (definition) {
-      registerAction(element, definition);
+    const definitions = `["${element.dataset[dataAttributeName]}"]`;
+    if (definitions) {
+      registerAction(element, definitions);
     }
     // TODO: else error
   });
@@ -173,65 +190,72 @@ function findActions(root, name, actionName, handler) {
   querySelectorAll(root, `atv-${name}-actions`, (element, dataAttributeName) => {
     const definitions = element.dataset[dataAttributeName];
     if (definitions) {
-      jsonParseArray(definitions).forEach((definition) => {
-        registerAction(element, definition);
-      });
+      registerAction(element, definitions);
     } // TODO: else error
   });
 
   // sequences 
   querySelectorAll(root, 'atv-actions', (element, dataAttributeName) => {
-    const invokeNext = (sequence) => {
+    function invokeNext(sequence, forEvent) {
       return function(event) {
-        // console.log("EVENT", event);
-        const first = sequence[0];
-
-        if (!first) {
-          // console.log('Fin');
-          return;
+        // Complete condition
+        const definition = sequence[0];
+        if (!definition) {
+          return false;
         }
-        const [controller, definition] = first.split("#");
-        const [action, args] = definition.split(/[()]/);
-        const definedActionName = action.split(/[-=]>/).at(-1);
+
+        // Skip conditions
+        const [requestedEvent, action, controller, args] = definition;
+        const remainder = sequence.slice(1);
+        if (!controller || requestedEvent !== forEvent) {
+          return invokeNext(remainder, forEvent)(event);
+        }
 
         const atvControllerElement = containingNamedController(event.target, controller);
-        // console.log(`containing controller: ${atvControllerElement} for ${definition} `);
-        // console.log(`attempting ${first}: ${definedActionName}`);
-        // console.log(atvRoots.get(atvControllerElement));
+        if (!atvControllerElement) {
+          return invokeNext(remainder, forEvent)(event);
+        }
 
+        // Execute conditions
         const actions = atvRoots.get(atvControllerElement)[controller]?.actions;
         if (actions) {
-          // console.log("FOUND ACTIONS", actions)
-          const func = actions[definedActionName];
+          const func = actions[action];
           if (func) {
-            // console.log("FOUND FUNCTION", func)
-            const result = func(event.target, event, args?.split(","));
-            // console.log(`RESULT: ${result}`)
+            const result = func(event.target, event, args);
             if (result) {
-              const remainder = sequence.slice(1);
-              return invokeNext(remainder)(event);
+              return invokeNext(remainder, forEvent)(event);
             }
+            return false;
           }
         }
-        return false;
+        return invokeNext(remainder, forEvent)(event);;
       };
-    };
-
-    const definitions = element.dataset[dataAttributeName];
-    // console.log(definitions);
-    const parsed = jsonParseArray(definitions);
-    if (definitions) {
-      const [firstController, definition] = parsed[0].split("#");
-      if (name !== firstController || outOfScope(element, root, name)) {
-        return;
-      }
-      const action = definition.split(/[()]/)[0];
-      const [eventName, definedActionName] = action.split(/[-=]>/);
-      // console.log(`FOUND--REGISTERING CALLBACK ${eventName}/${name} ${definedActionName}`)
-      const callback = invokeNext(parsed, );
-      handlers.push([element, eventName, callback]);
-      element.addEventListener(eventName, callback);
     }
+
+    const actionList = element.dataset[dataAttributeName];
+    if (!actionList) {
+      return;
+    }
+    const sequence = parseActions(actionList);
+    const eventList = new Set;
+    sequence.forEach((definition) => {
+      eventList.add(definition[0]);
+    });
+    eventList.forEach((forEvent) => {
+      let found = false;
+      sequence.forEach((definition) => {
+        const [requestedEvent] = definition;
+        if (forEvent !== requestedEvent) {
+          return;
+        }
+        found = true;
+      });
+      if (found) {
+        const callback = invokeNext(sequence, forEvent);
+        handlers.push([element, forEvent, callback]);
+        element.addEventListener(forEvent, callback);
+      }
+    });
   });
   return handlers;
 }
@@ -301,7 +325,6 @@ function cleanupController(controllers, name) {
 function findControllers(selector, type, callback) {
   document.querySelectorAll(selector).forEach((element) => {
     const root = atvRoots.get(element);
-    // console.log(root);
     if (root && root[type]) {
       callback(root[type]);
     }
@@ -321,8 +344,7 @@ function createController(root, name, module) {
     root: root,
     name: name,
     actions: {},
-    handlers: {},
-    sequences: []
+    handlers: {}
   }
   const pascalCase = pascalize(name);
 
@@ -342,19 +364,12 @@ function createController(root, name, module) {
     }
   });
 
-  // console.log("IN")
-  // console.log(atvRoots);
-  // console.log(root);
-  // console.log(controller)
-
   controllers[name] = controller;
   atvRoots.set(root, controllers);
 }
 
 // Gather the context for this instance, provide it to the controller instance
 function registerController(root) {
-  // console.log(root);
-
   controllersFor(root).forEach((name) => {
     let importmapName = `${name}_atv`;
     Object.keys(importMap).forEach((source) => {
@@ -384,7 +399,6 @@ function cleanup() {
 let activated = false;
 
 function domWatcher(mutationList, _observer) {
-  // console.log("DOMCHANGE")
   if (!activated) {
     return;
   }
@@ -393,7 +407,6 @@ function domWatcher(mutationList, _observer) {
   for (const mutation of mutationList) {
     if (mutation.type === "childList") {
       mutation.removedNodes.forEach((node) => {
-        // console.log("REMOVED")
         if (atvRemoved || !node.querySelector) {
           return;
         }
@@ -413,27 +426,19 @@ function domWatcher(mutationList, _observer) {
         break;
       }
       mutation.addedNodes.forEach((node) => {
-        // console.log("ADD")
-        // console.log(node);
-        // console.log(node.parentNode);
         if (!node.parentNode?.querySelector) {
           return;
         }
         const atv = node.parentNode.querySelector(atvControllerSelector);
-        // console.log(atv);
-        // console.log(atvControllerSelector);
         if (atv) {
           nodeToRegister.add(node);
         }
       })
     }
     if (mutation.type === "attributes") {
-      // console.log("ATTR")
       const attributeName = mutation.attributeName;
       if (attributeName) {
         if (/^data[-_]atv/i.test(attributeName)) {
-          // console.log(`mutation ${attributeName}`);
-          // console.log(mutation.target);
           const node = mutation.target.closest(atvControllerSelector);
           if (node) {
             nodeToRegister.add(node);
@@ -442,13 +447,11 @@ function domWatcher(mutationList, _observer) {
       }
     }
   }
-  // console.log(atvRemoved);
-  // console.log(nodeToRegister);
+
   if (atvRemoved) {
     activate(true);
     return;
   }
-  // console.log(atvRoots);
   let addedCount = 0;
   nodeToRegister.forEach((node) => {
     registerController(node);
