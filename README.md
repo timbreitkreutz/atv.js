@@ -58,8 +58,6 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 
 ## Coming Soon!
 
-* Something like Outlets
-* Window events
 * More documentation!
 * Tests (right now I'm leveraging another private project for this)
 * And other things
