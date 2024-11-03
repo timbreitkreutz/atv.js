@@ -1,6 +1,6 @@
 {
   "name": "@sbrew.com/atv",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "Classless JS framework for Rails",
   "main": "atv.js",
   "scripts": {
