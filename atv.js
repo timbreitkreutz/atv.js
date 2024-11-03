@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.23";
+const _version = "0.0.24";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
@@ -84,7 +84,7 @@ function allPermutations(name, callback, prefix = null) {
   allPermutations(words.slice(1).join("-"), callback, `${words[0]}`);
 }
 
-function querySelectorAll(container, selector, callback) {
+function selectPermutations(container, selector, callback) {
   allPermutations(`data-${selector}`, (variant) => {
     container.querySelectorAll(`[${variant}]`).forEach((element) => {
       const dataAttributeName = camelize(variant.replace(/^data-/, ""));
@@ -224,7 +224,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
       });
     }
 
-    querySelectorAll(
+    selectPermutations(
       root,
       `${prefix}${name}-action`,
       (element, dataAttributeName) => {
@@ -237,7 +237,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
       }
     );
 
-    querySelectorAll(
+    selectPermutations(
       root,
       `${prefix}${name}-actions`,
       (element, dataAttributeName) => {
@@ -297,7 +297,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
         return;
       }
       const sequence = parseActions(actionList);
-      const eventList = new Set();
+      const eventList = new Set;
       sequence.forEach((definition) => {
         eventList.add(definition[0]);
       });
@@ -317,10 +317,10 @@ const activate = (prefix = "atv-", reactivate = false) => {
         }
       });
     }
-    querySelectorAll(root, `${prefix}actions`, (element, dataAttributeName) => {
+    selectPermutations(root, `${prefix}actions`, (element, dataAttributeName) => {
       buildSequence(element, dataAttributeName);
     });
-    querySelectorAll(root, `${prefix}action`, (element, dataAttributeName) => {
+    selectPermutations(root, `${prefix}action`, (element, dataAttributeName) => {
       buildSequence(element, dataAttributeName);
     });
     return actionHandlers;
@@ -331,7 +331,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
     const container = root.parentNode;
     let targets = {};
 
-    querySelectorAll(container, `${prefix}${name}-target`, (element) => {
+    selectPermutations(container, `${prefix}${name}-target`, (element) => {
       if (outOfScope(element, root, name)) {
         return;
       }
@@ -360,7 +360,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
     let values;
 
     const valuePattern = `${prefix}${name}-values`;
-    querySelectorAll(container, valuePattern, (element) => {
+    selectPermutations(container, valuePattern, (element) => {
       if (values || outOfScope(element, root, name)) {
         return;
       }
@@ -520,7 +520,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
       return;
     }
 
-    let addedCount = 0;
+    let addedNodes = new Set;
     mutationList.forEach((mutation) => {
       if (mutation.type === "childList") {
         mutation.addedNodes.forEach((node) => {
@@ -530,17 +530,17 @@ const activate = (prefix = "atv-", reactivate = false) => {
           node.parentNode
             .querySelectorAll(atvControllerSelector)
             .forEach((controller) => {
-              if (!atvRoots.has(controller)) {
+              if (!addedNodes.has(controller) && !atvRoots.has(controller)) {
                 registerController(controller);
-                addedCount += 1;
+                addedNodes.add(controller);
               }
             });
         });
       }
     });
 
-    if (addedCount > 0) {
-      report("mutation", addedCount);
+    if (addedNodes.size > 0) {
+      report("mutation", addedNodes.size);
     }
   }
 
