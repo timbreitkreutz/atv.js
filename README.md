@@ -54,7 +54,7 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 
 ## Examples
 
-[ATV By Example](https://sbrew.com/atv_by_example)
+[ATV By Example](https://atv.sbrew.com/atv_by_example)
 
 ## Coming Soon!
 
