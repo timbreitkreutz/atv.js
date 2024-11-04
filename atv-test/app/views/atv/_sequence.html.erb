@@ -1,0 +1,11 @@
+
+<div data-atv-controller="divider, multiplier">
+  (<input type="number" value="12" data-atv-divider-target="dividend"></input> /
+  <input type="number" value="3" data-atv-divider-target="divisor"></input>) =
+  <span data-atv-divider-target="quotient" data-atv-multiplier-target="factor"></span> *
+  <input type="number" value="6" data-atv-multiplier-target="factor"></input>)  = 
+  <span data-atv-multiplier-target="product"></span>
+  <button id="button" data-atv-actions="click->divider#divide, click->multiplier#multiply">
+    Calculate
+  </button>
+</div>
