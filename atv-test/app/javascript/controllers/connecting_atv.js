@@ -5,12 +5,9 @@ function connect(targets, _values, root) {
     click: function() {
       root.insertAdjacentHTML("afterend", `
         <div data-atv-controller="connecting" id="${Math.random()}">
-          <button data-atv-connecting-action="click">
-            Create
-          </button>
-          <span data-atv-connecting-target="state">
+          <button class="connect-button" data-atv-connecting-action="click" data-atv-connecting-target="state">
             Not yet connected.
-          </span>
+          </button>
         </div>
       `);
     }

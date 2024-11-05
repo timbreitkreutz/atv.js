@@ -144,4 +144,31 @@ class AtvBasicsTest < ApplicationSystemTestCase
     assert quotient.has_text?("You can't divide by zero")
     assert result.has_text?("24")
   end
+
+  test "adding and removing stuff" do
+    visit atv_by_example_path
+    assert page.has_text?("Connected", count: 2)
+    assert !page.has_text?("Not yet connected")
+    create_button = find(".connect-button")
+    create_button.click 
+    assert !page.has_text?("Not yet connected")
+    assert page.has_text?("Connected", count: 3)
+    create_button.click 
+    assert !page.has_text?("Not yet connected")
+    assert page.has_text?("Connected", count: 4)
+    last_button = page.all(".connect-button").last 
+    last_button.click 
+    assert !page.has_text?("Not yet connected")
+    assert page.has_text?("Connected", count: 5)
+
+    # Disconnect
+
+    disconnect_button = find("#disconnect-button")
+    assert page.has_text?("Disconnect", count: 1)
+    assert !page.has_text?("Disconnected")
+    disconnect_button.click 
+    assert page.has_text?("Disconnect", count: 1)
+    assert page.has_text?("Disconnected")
+    assert page.has_text?("Connected", count: 4)
+  end
 end

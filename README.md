@@ -52,13 +52,16 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 
 ## Examples
 
-[ATV By Example](https://atv.sbrew.com/atv_by_example)
+Right now all the features of ATV can be seen in action at [ATV By Example](https://atv.sbrew.com/atv_by_example)
 
 ## Coming Soon!
 
-* More documentation!
-* More Tests
-* And other things
+I'll be adding more tests and documentation.
+
+If there's demand, the following things might get added:
+* Something closer to the 'window' events of stimulus
+* Broken out values, vs a single JSON attribute
+* Ability to modify attributes in the DOM and pick up the changes, e.g. new targets added dynamically
 
 ## Contributing
 
@@ -66,6 +69,11 @@ ATV is still a very young project.
 This incarnation started afresh in August 2024 after a couple of previous sketches and prototypes were thrown out.
 
 If you like this idea and want to help out please join or start a discussion here on the GitHub page. I'm looking for like minded rails fans who also are striving to do clean, minimalist JavaScript along the lines of Douglas Crockford (JavaScript--The Good Parts).
+
+### Tests
+
+* Tests are run in `atv-test` -- it's a Rails 8 Beta app set up with capybara/selenium on Firefox.
+* To run tests: `rails test:system`
 
 ### Credo
 

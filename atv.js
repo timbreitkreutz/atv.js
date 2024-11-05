@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const _version = "0.0.24";
+const _version = "0.0.25";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
