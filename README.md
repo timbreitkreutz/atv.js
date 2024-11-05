@@ -57,7 +57,23 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 * rails standard location of JS controllers (i.e. app/javascript/controllers/*_atv.js)
 * reasonably modern browser--regularly tested on firefox, safari, and a couple-years-old chromium
 
-## Examples
+## Usage and examples
+
+To add to you importmap enabled rails app:
+
+```
+bin/importmap pin '@sbrew.com/atv'
+```
+
+Then add the following code to your global application layout (or global JavaScript page):
+
+```js
+<script type="module">
+  import { activate } from 'atv';
+
+  activate();
+</script>
+```
 
 Right now all the features of ATV can be seen in action at [ATV By Example](https://atv.sbrew.com/atv_by_example)
 
