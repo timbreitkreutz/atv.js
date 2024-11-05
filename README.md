@@ -2,8 +2,7 @@
 
 
 # atv.js
-Lightweight JavaScript for Rails inspired by Stimulus.js
-
+Lightweight JavaScript for Rails inspired by Stimulus.js; jsminifies to under 6,000 bytes.
 
 Do you just want to have actions, targets, and values available in your Rails JS controllers? Tired of messing around with `this` and `bind` and the other bad parts of JavaScript?
 
