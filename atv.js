@@ -1,4 +1,6 @@
-/* global document, window, console */
+/*global
+  console, document, window
+*/
 
 //
 // ATV.js: Actions, Targets, Values
@@ -48,7 +50,9 @@ const deCommaPattern = /,[\s+]/;
 function pascalize(string) {
   return string
     .split(permutationPattern)
-    .map((str) => str.charAt(0).toUpperCase() + str.slice(1))
+    .map(function (str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    })
     .join("");
 }
 
@@ -85,8 +89,8 @@ function allPermutations(name, callback, prefix = null) {
 }
 
 function selectPermutations(container, selector, callback) {
-  allPermutations(`data-${selector}`, (variant) => {
-    container.querySelectorAll(`[${variant}]`).forEach((element) => {
+  allPermutations(`data-${selector}`, function (variant) {
+    container.querySelectorAll(`[${variant}]`).forEach(function (element) {
       const dataAttributeName = camelize(variant.replace(/^data-/, ""));
       callback(element, dataAttributeName, variant);
     });
@@ -97,7 +101,9 @@ function jsonParseArray(string) {
   if (/^[\[{]/.test(string)) {
     return JSON.parse(string);
   }
-  return string.split(deCommaPattern).map((str) => str.trim());
+  return string.split(deCommaPattern).map(function (str) {
+    return str.trim();
+  });
 }
 
 // Parses out actions:
@@ -134,7 +140,7 @@ function dataFor(element, name) {
   }
   let result = element.dataset[name] || element.dataset[camelize(name)];
   if (!result) {
-    allPermutations(name, (perm) => {
+    allPermutations(name, function (perm) {
       if (!result) {
         result = element.dataset[perm];
       }
@@ -143,7 +149,7 @@ function dataFor(element, name) {
   return result;
 }
 
-const activate = (prefix = "atv-", reactivate = false) => {
+function activate(prefix = "atv-") {
   let atvRoots = new Map();
   let activated = false;
   const observer = new MutationObserver(domWatcher);
@@ -160,7 +166,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
 
   // Calculate selector for all controlers
   let selectors = [];
-  allPermutations(`data-${prefix}controller`, (perm) => {
+  allPermutations(`data-${prefix}controller`, function (perm) {
     selectors.push(`[${perm}]`);
   });
   const atvControllerSelector = selectors.join(",");
@@ -172,7 +178,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
     // Behavior undefined if it finds more than one permutation.
     const closestRoot = element.closest(atvControllerSelector);
     let out = false;
-    controllersFor(closestRoot).forEach((controller) => {
+    controllersFor(closestRoot).forEach(function (controller) {
       if (controller === name) {
         out = !(closestRoot === root);
       }
@@ -187,7 +193,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
       return undefined;
     }
     let foundRoot;
-    controllersFor(closestRoot).forEach((controller) => {
+    controllersFor(closestRoot).forEach(function (controller) {
       if (foundRoot) {
         return;
       }
@@ -206,7 +212,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
   function findActions(root, name, actionName, handler) {
     let actionHandlers = [];
     function registerAction(element, definitions) {
-      parseActions(definitions).forEach((definition) => {
+      parseActions(definitions).forEach(function (definition) {
         const [requestedEvent, definedActionName, controller, args] =
           definition;
         if (controller && controller !== name) {
@@ -218,7 +224,9 @@ const activate = (prefix = "atv-", reactivate = false) => {
         if (outOfScope(element, root, name)) {
           return;
         }
-        const callback = (event) => handler(event.target, event, args);
+        const callback = function (event) {
+          return handler(event.target, event, args);
+        };
         actionHandlers.push([element, requestedEvent, callback]);
         element.addEventListener(requestedEvent, callback);
       });
@@ -227,7 +235,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
     selectPermutations(
       root,
       `${prefix}${name}-action`,
-      (element, dataAttributeName) => {
+      function (element, dataAttributeName) {
         const definitions = `["${element.dataset[dataAttributeName]}"]`;
         if (definitions) {
           registerAction(element, definitions);
@@ -240,7 +248,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
     selectPermutations(
       root,
       `${prefix}${name}-actions`,
-      (element, dataAttributeName) => {
+      function (element, dataAttributeName) {
         const definitions = element.dataset[dataAttributeName];
         if (definitions) {
           registerAction(element, definitions);
@@ -297,13 +305,13 @@ const activate = (prefix = "atv-", reactivate = false) => {
         return;
       }
       const sequence = parseActions(actionList);
-      const eventList = new Set;
-      sequence.forEach((definition) => {
+      const eventList = new Set();
+      sequence.forEach(function (definition) {
         eventList.add(definition[0]);
       });
-      eventList.forEach((forEvent) => {
+      eventList.forEach(function (forEvent) {
         let found = false;
-        sequence.forEach((definition) => {
+        sequence.forEach(function (definition) {
           const [requestedEvent] = definition;
           if (forEvent !== requestedEvent) {
             return;
@@ -317,12 +325,20 @@ const activate = (prefix = "atv-", reactivate = false) => {
         }
       });
     }
-    selectPermutations(root, `${prefix}actions`, (element, dataAttributeName) => {
-      buildSequence(element, dataAttributeName);
-    });
-    selectPermutations(root, `${prefix}action`, (element, dataAttributeName) => {
-      buildSequence(element, dataAttributeName);
-    });
+    selectPermutations(
+      root,
+      `${prefix}actions`,
+      function (element, dataAttributeName) {
+        buildSequence(element, dataAttributeName);
+      }
+    );
+    selectPermutations(
+      root,
+      `${prefix}action`,
+      function (element, dataAttributeName) {
+        buildSequence(element, dataAttributeName);
+      }
+    );
     return actionHandlers;
   }
 
@@ -331,23 +347,27 @@ const activate = (prefix = "atv-", reactivate = false) => {
     const container = root.parentNode;
     let targets = {};
 
-    selectPermutations(container, `${prefix}${name}-target`, (element) => {
-      if (outOfScope(element, root, name)) {
-        return;
-      }
-      const targetPattern = `${prefix}${name}-target`;
-      const key = dataFor(element, targetPattern);
-      const allKey = `all${pascalize(key)}`;
+    selectPermutations(
+      container,
+      `${prefix}${name}-target`,
+      function (element) {
+        if (outOfScope(element, root, name)) {
+          return;
+        }
+        const targetPattern = `${prefix}${name}-target`;
+        const key = dataFor(element, targetPattern);
+        const allKey = `all${pascalize(key)}`;
 
-      if (targets[allKey]) {
-        targets[allKey].push(element);
-      } else if (targets[key]) {
-        targets[allKey] = [targets[key], element];
-        delete targets[key];
-      } else {
-        targets[key] = element;
+        if (targets[allKey]) {
+          targets[allKey].push(element);
+        } else if (targets[key]) {
+          targets[allKey] = [targets[key], element];
+          delete targets[key];
+        } else {
+          targets[key] = element;
+        }
       }
-    });
+    );
 
     return targets;
   }
@@ -360,7 +380,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
     let values;
 
     const valuePattern = `${prefix}${name}-values`;
-    selectPermutations(container, valuePattern, (element) => {
+    selectPermutations(container, valuePattern, function (element) {
       if (values || outOfScope(element, root, name)) {
         return;
       }
@@ -376,9 +396,9 @@ const activate = (prefix = "atv-", reactivate = false) => {
   function cleanupController(controllers, name) {
     const controller = controllers[name];
     const handlers = controller.handlers;
-    Object.keys(handlers).forEach((key) => {
+    Object.keys(handlers).forEach(function (key) {
       const entries = handlers[key];
-      entries.forEach((entry) => {
+      entries.forEach(function (entry) {
         entry[0].removeEventListener(entry[1], entry[2]);
       });
     });
@@ -390,7 +410,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
   }
 
   function findControllers(selector, type, callback) {
-    document.querySelectorAll(selector).forEach((element) => {
+    document.querySelectorAll(selector).forEach(function (element) {
       const root = atvRoots.get(element);
       if (root && root[type]) {
         callback(root[type]);
@@ -425,7 +445,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
     if (typeof callbacks === "function") {
       callbacks = callbacks();
     }
-    Object.keys(callbacks).forEach((type) => {
+    Object.keys(callbacks).forEach(function (type) {
       controller.actions[type] = callbacks[type];
       if (type === "disconnect") {
         controller.disconnect = callbacks[type];
@@ -445,18 +465,18 @@ const activate = (prefix = "atv-", reactivate = false) => {
 
   // Gather the context for this instance, provide it to the controller instance
   function registerController(root) {
-    controllersFor(root).forEach((name) => {
+    controllersFor(root).forEach(function (name) {
       let importmapName = `${name}_atv`;
-      Object.keys(importMap).forEach((source) => {
+      Object.keys(importMap).forEach(function (source) {
         if (source.replace(/_/g, "-").includes(`/${name}-atv`)) {
           importmapName = importMap[source];
         }
       });
       import(importmapName)
-        .then((module) => {
+        .then(function (module) {
           createController(root, name, module);
         })
-        .catch((error) => {
+        .catch(function (error) {
           console.error("Loading failed:", error);
         });
     });
@@ -464,8 +484,8 @@ const activate = (prefix = "atv-", reactivate = false) => {
 
   function cleanup() {
     observer.disconnect();
-    atvRoots.forEach((controllers) => {
-      Object.keys(controllers).forEach((name) => {
+    atvRoots.forEach(function (controllers) {
+      Object.keys(controllers).forEach(function (name) {
         cleanupController(controllers, name);
       });
     });
@@ -484,17 +504,17 @@ const activate = (prefix = "atv-", reactivate = false) => {
     );
   }
 
-  function domWatcher(mutationList, _observer) {
+  function domWatcher(mutationList) {
     if (!activated) {
       return;
     }
     let atvRemoved = false;
-    mutationList.forEach((mutation) => {
+    mutationList.forEach(function (mutation) {
       if (atvRemoved) {
         return;
       }
       if (mutation.type === "childList") {
-        mutation.removedNodes.forEach((node) => {
+        mutation.removedNodes.forEach(function (node) {
           if (atvRemoved || !node.querySelector) {
             return;
           }
@@ -520,16 +540,16 @@ const activate = (prefix = "atv-", reactivate = false) => {
       return;
     }
 
-    let addedNodes = new Set;
-    mutationList.forEach((mutation) => {
+    let addedNodes = new Set();
+    mutationList.forEach(function (mutation) {
       if (mutation.type === "childList") {
-        mutation.addedNodes.forEach((node) => {
+        mutation.addedNodes.forEach(function (node) {
           if (!node.parentNode?.querySelector) {
             return;
           }
           node.parentNode
             .querySelectorAll(atvControllerSelector)
-            .forEach((controller) => {
+            .forEach(function (controller) {
               if (!addedNodes.has(controller) && !atvRoots.has(controller)) {
                 registerController(controller);
                 addedNodes.add(controller);
@@ -545,7 +565,7 @@ const activate = (prefix = "atv-", reactivate = false) => {
   }
 
   let addedCount = 0;
-  document.querySelectorAll(atvControllerSelector).forEach((root) => {
+  document.querySelectorAll(atvControllerSelector).forEach(function (root) {
     registerController(root);
     addedCount += 1;
   });
@@ -555,6 +575,6 @@ const activate = (prefix = "atv-", reactivate = false) => {
   activated = true;
   const config = { childList: true, subtree: true };
   observer.observe(document, config);
-};
+}
 
 export { activate };

@@ -11,7 +11,6 @@ Do you want to not care about whether you have underscores or dashes in your Rai
 
 Is stimulus just not DRY enough for you?
 
-
 If so, this library might be for you!
 
 Here is an example that simulates a conversation you might have upon meeting an extraterrestrial alien:
@@ -51,7 +50,6 @@ Finally, the following JS is required (typically in the application layout heade
 
 Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in particular the "action" declaration. Also note that in stimulus it is darn near impossible to use it at all without JavaScript "classes". With ATV you can use those if you want, but you don't have to.
 
-
 ## Examples
 
 [ATV By Example](https://atv.sbrew.com/atv_by_example)
@@ -59,7 +57,7 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 ## Coming Soon!
 
 * More documentation!
-* Tests (right now I'm leveraging another private project for this)
+* More Tests
 * And other things
 
 ## Contributing
@@ -68,3 +66,10 @@ ATV is still a very young project.
 This incarnation started afresh in August 2024 after a couple of previous sketches and prototypes were thrown out.
 
 If you like this idea and want to help out please join or start a discussion here on the GitHub page. I'm looking for like minded rails fans who also are striving to do clean, minimalist JavaScript along the lines of Douglas Crockford (JavaScript--The Good Parts).
+
+### Credo
+
+* Keep It Simple, Sam
+* atv.js will be formatted with `prettier --trailing-comma none`
+* I reserve the right to make atv.js pass JSlint (browser, whitespace options-- will need a little massaging each time unfortunately) at any given time. Incoming PRs must not add new JSLint violations.
+* where there is a conflict, `prettier --trailing-comma none` trumps JSlint
