@@ -50,6 +50,13 @@ Finally, the following JS is required (typically in the application layout heade
 
 Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in particular the "action" declaration. Also note that in stimulus it is darn near impossible to use it at all without JavaScript "classes". With ATV you can use those if you want, but you don't have to.
 
+## Dependencies
+
+* importmaps
+* es6 modules
+* rails standard location of JS controllers (i.e. app/javascript/controllers/*_atv.js)
+* reasonably modern browser--regularly tested on firefox, safari, and a couple-years-old chromium
+
 ## Examples
 
 Right now all the features of ATV can be seen in action at [ATV By Example](https://atv.sbrew.com/atv_by_example)
