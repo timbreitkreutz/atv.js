@@ -58,7 +58,7 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 
 ## Usage and examples
 
-To add to you importmap enabled rails app:
+To add to your importmap enabled rails app:
 
 ```
 bin/importmap pin '@sbrew.com/atv'
