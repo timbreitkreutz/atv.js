@@ -1,4 +1,582 @@
-// @sbrew.com/atv@0.0.25 downloaded from https://ga.jspm.io/npm:@sbrew.com/atv@0.0.25/atv.js
+/*global
+  console, document, window
+*/
 
-const t=JSON.parse(document.querySelector("script[type='importmap']").innerText).imports;const e=/[\-_]/;const n=/,[\s+]/;function pascalize(t){return t.split(e).map((function(t){return t.charAt(0).toUpperCase()+t.slice(1)})).join("")}function camelize(t){const e=pascalize(t);return e.charAt(0).toLowerCase()+e.slice(1)}function allPermutations(t,n,o=null){const r=t.split(e);if(r.length<2)if(o){n(`${o}-${t}`);n(`${o}_${t}`)}else n(t);else if(o){allPermutations(r.slice(1).join("-"),n,`${o}-${r[0]}`);allPermutations(r.slice(1).join("-"),n,`${o}_${r[0]}`)}else allPermutations(r.slice(1).join("-"),n,`${r[0]}`)}function selectPermutations(t,e,n){allPermutations(`data-${e}`,(function(e){t.querySelectorAll(`[${e}]`).forEach((function(t){const o=camelize(e.replace(/^data-/,""));n(t,o,e)}))}))}function jsonParseArray(t){return/^[\[{]/.test(t)?JSON.parse(t):t.split(n).map((function(t){return t.trim()}))}let parseActions=function(t){const e=jsonParseArray(t);return e.map((function(t){let[e,o]=t.split(/[\-=]>/);if(!o){o=e;e=e.split(/[#(),]/)[0]}let[r,c]=o.split("#");if(!c){c=r;r=void 0}let[i,s]=c.split(/[()]/);i||(i=e);s&&(s=s.split(n));return[e,i,r,s]}))};function dataFor(t,e){if(!t.dataset)return;let n=t.dataset[e]||t.dataset[camelize(e)];n||allPermutations(e,(function(e){n||(n=t.dataset[e])}));return n}function activate(e="atv-"){let o=new Map;let r=false;const c=new MutationObserver(domWatcher);function controllersFor(t){const o=dataFor(t,`${e}controller`);return o?o.replace(/_/g,"-").split(n):[]}let i=[];allPermutations(`data-${e}controller`,(function(t){i.push(`[${t}]`)}));const s=i.join(",");function outOfScope(t,e,n){const o=t.closest(s);let r=false;controllersFor(o).forEach((function(t){t===n&&(r=!(o===e))}));return r}function containingNamedController(t,e){const n=t.closest(s);if(!n)return;let o;controllersFor(n).forEach((function(t){o||t!==e||(o=n)}));return o||containingNamedController(n.parentNode,e)}function findActions(t,n,r,c){let i=[];function registerAction(e,o){parseActions(o).forEach((function(o){const[s,a,l,u]=o;if(l&&l!==n)return;if(r!==a)return;if(outOfScope(e,t,n))return;const callback=function(t){return c(t.target,t,u)};i.push([e,s,callback]);e.addEventListener(s,callback)}))}selectPermutations(t,`${e}${n}-action`,(function(t,e){const o=`["${t.dataset[e]}"]`;o?registerAction(t,o):console.error(`Malformed action: ${n}/${e}`)}));selectPermutations(t,`${e}${n}-actions`,(function(t,e){const o=t.dataset[e];o?registerAction(t,o):console.error(`Malformed actions: ${n}/${e}`)}));function buildSequence(t,e){function invokeNext(t,e){return function(n){const r=t[0];if(!r)return false;const[c,i,s,a]=r;const l=t.slice(1);if(!s||c!==e)return invokeNext(l,e)(n);const u=containingNamedController(n.target,s);if(!u)return invokeNext(l,e)(n);const f=o.get(u)[s]?.actions;if(f){const t=f[i];if(t){const o=t(n.target,n,a);return!!o&&invokeNext(l,e)(n)}}return invokeNext(l,e)(n)}}const n=t.dataset[e];if(!n)return;const r=parseActions(n);const c=new Set;r.forEach((function(t){c.add(t[0])}));c.forEach((function(e){let n=false;r.forEach((function(t){const[o]=t;e===o&&(n=true)}));if(n){const n=invokeNext(r,e);i.push([t,e,n]);t.addEventListener(e,n)}}))}selectPermutations(t,`${e}actions`,(function(t,e){buildSequence(t,e)}));selectPermutations(t,`${e}action`,(function(t,e){buildSequence(t,e)}));return i}function findTargets(t,n){const o=t.parentNode;let r={};selectPermutations(o,`${e}${n}-target`,(function(o){if(outOfScope(o,t,n))return;const c=`${e}${n}-target`;const i=dataFor(o,c);const s=`all${pascalize(i)}`;if(r[s])r[s].push(o);else if(r[i]){r[s]=[r[i],o];delete r[i]}else r[i]=o}));return r}function findValues(t,n){let o=t.parentNode;let r;const c=`${e}${n}-values`;selectPermutations(o,c,(function(e){if(r||outOfScope(e,t,n))return;const o=dataFor(e,c);o&&(r=JSON.parse(o))}));return r}function cleanupController(t,e){const n=t[e];const o=n.handlers;Object.keys(o).forEach((function(t){const e=o[t];e.forEach((function(t){t[0].removeEventListener(t[1],t[2])}))}));if(n.disconnect){n.disconnect();n.disconnect=void 0}}function findControllers(t,e,n){document.querySelectorAll(t).forEach((function(t){const r=o.get(t);r&&r[e]&&n(r[e])}))}function createController(t,e,n){let r=o.get(t);r||(r={});r[e]&&cleanupController(r,e);let c={actions:{},handlers:{},name:e,root:t};c.targets=findTargets(t,e);c.values=findValues(t,e);let i=n.connect(c.targets,c.values,t,findControllers);typeof i==="function"&&(i=i());Object.keys(i).forEach((function(n){c.actions[n]=i[n];n==="disconnect"?c.disconnect=i[n]:c.handlers[n]=findActions(t,e,n,i[n])}));r[e]=c;o.set(t,r)}function registerController(e){controllersFor(e).forEach((function(n){let o=`${n}_atv`;Object.keys(t).forEach((function(e){e.replace(/_/g,"-").includes(`/${n}-atv`)&&(o=t[e])}));import(o).then((function(t){createController(e,n,t)})).catch((function(t){console.error("Loading failed:",t)}))}))}function cleanup(){c.disconnect();o.forEach((function(t){Object.keys(t).forEach((function(e){cleanupController(t,e)}))}));o=new Map}function report(t,n){n<1||console.log([`${e}controllers: ${o.size} present`,`${n} added. (${t})`].join(" / "))}function domWatcher(t){if(!r)return;let n=false;t.forEach((function(t){n||t.type==="childList"&&t.removedNodes.forEach((function(t){if(n||!t.querySelector)return;if(t.dataset){const o=dataFor(t,`${e}controller`);if(o){n=true;return}}const o=t.querySelector(s);o&&(n=true)}))}));if(n){cleanup();activate(e);return}let c=new Set;t.forEach((function(t){t.type==="childList"&&t.addedNodes.forEach((function(t){t.parentNode?.querySelector&&t.parentNode.querySelectorAll(s).forEach((function(t){if(!c.has(t)&&!o.has(t)){registerController(t);c.add(t)}}))}))}));c.size>0&&report("mutation",c.size)}let a=0;document.querySelectorAll(s).forEach((function(t){registerController(t);a+=1}));report("activate",a);r=true;const l={childList:true,subtree:true};c.observe(document,l)}export{activate};
+//
+// ATV.js: Actions, Targets, Values
+//
+// Super vanilla JS / Lightweight alternative to stimulus without "class"
+// overhead and binding nonsense, just the actions, targets, and values
+// Also as underscore/hyphen indifferent as possible to ease the learning curve
 
+// The MIT License (MIT)
+
+// Copyright (c) 2024 Timothy Breitkreutz
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+const _version = "0.0.27";
+
+// To dynamically load up the ATV javascripts
+const importMap = JSON.parse(
+  document.querySelector("script[type='importmap']").innerText
+).imports;
+
+// Allow for any permutation of underscores and dashes in the data parts
+// of the DOM elements. No more wasting time on guessing the permutation
+// stimulus style!
+
+/* General functions, not tied to a specific activation */
+
+const permutationPattern = /[\-_]/;
+const deCommaPattern = /,[\s+]/;
+
+function pascalize(string) {
+  return string
+    .split(permutationPattern)
+    .map((str) => str.charAt(0).toUpperCase() + str.slice(1))
+    .join("");
+}
+
+function camelize(string) {
+  const pascalized = pascalize(string);
+  return pascalized.charAt(0).toLowerCase() + pascalized.slice(1);
+}
+
+function allPermutations(name, callback, prefix = null) {
+  const words = name.split(permutationPattern);
+  if (words.length < 2) {
+    if (prefix) {
+      callback(`${prefix}-${name}`);
+      callback(`${prefix}_${name}`);
+    } else {
+      callback(name);
+    }
+    return;
+  }
+  if (prefix) {
+    allPermutations(
+      words.slice(1).join("-"),
+      callback,
+      `${prefix}-${words[0]}`
+    );
+    allPermutations(
+      words.slice(1).join("-"),
+      callback,
+      `${prefix}_${words[0]}`
+    );
+    return;
+  }
+  allPermutations(words.slice(1).join("-"), callback, `${words[0]}`);
+}
+
+function selectPermutations(container, selector, callback) {
+  allPermutations(`data-${selector}`, function (variant) {
+    container.querySelectorAll(`[${variant}]`).forEach(function (element) {
+      let dataAttributeName = variant.replace(/^data-/, "");
+      if (!element.dataset[dataAttributeName]) {
+        dataAttributeName = camelize(dataAttributeName);
+      }
+      callback(element, dataAttributeName, variant);
+    });
+  });
+}
+
+function jsonParseArray(string) {
+  if (/^[\[{]/.test(string)) {
+    return JSON.parse(string);
+  }
+  return string.split(deCommaPattern).map((str) => str.trim());
+}
+
+// Parses out actions:
+// "requestedEvent->controller#actionName(args)" =>
+//      requestedEvent, actionName, controller, args
+// "click" => click, click, null, null
+let parseActions = function (string) {
+  const definitions = jsonParseArray(string);
+  return definitions.map(function (definition) {
+    let [requestedEvent, fullAction] = definition.split(/[\-=]>/);
+    if (!fullAction) {
+      fullAction = requestedEvent;
+      requestedEvent = requestedEvent.split(/[#(),]/)[0];
+    }
+    let [controller, innerAction] = fullAction.split("#");
+    if (!innerAction) {
+      innerAction = controller;
+      controller = undefined;
+    }
+    let [actionName, args] = innerAction.split(/[()]/);
+    if (!actionName) {
+      actionName = requestedEvent;
+    }
+    if (args) {
+      args = args.split(deCommaPattern);
+    }
+    return [requestedEvent, actionName, controller, args];
+  });
+};
+
+function dataFor(element, name) {
+  if (!element.dataset) {
+    return;
+  }
+  let result = element.dataset[name];
+  if (!result) {
+    result = element.dataset[camelize(name)];
+  }
+  if (!result) {
+    allPermutations(name, function (perm) {
+      if (!result) {
+        result = element.dataset[perm];
+      }
+    });
+  }
+  return result;
+}
+
+function activate(prefix = "atv-") {
+  let atvRoots = new Map();
+  let activated = false;
+  const observer = new MutationObserver(domWatcher);
+
+  // Find any controlles attached to element
+  function controllersFor(element) {
+    const list = dataFor(element, `${prefix}controller`);
+    if (list) {
+      return list.replace(/_/g, "-").split(deCommaPattern);
+    } else {
+      return [];
+    }
+  }
+
+  // Calculate selector for all controlers
+  let selectors = [];
+  allPermutations(`data-${prefix}controller`, function (perm) {
+    selectors.push(`[${perm}]`);
+  });
+  const atvControllerSelector = selectors.join(",");
+
+  // To allow for nesting controllers:
+  // skip if it's not the nearest enclosing controller
+  function outOfScope(element, root, name) {
+    // There should only be one of these.
+    // Behavior undefined if it finds more than one permutation.
+    const closestRoot = element.closest(atvControllerSelector);
+    let out = false;
+    controllersFor(closestRoot).forEach(function (controller) {
+      if (controller === name) {
+        out = !(closestRoot === root);
+      }
+    });
+    return out;
+  }
+
+  // Find the nearest named controller for an element
+  function containingNamedController(element, name) {
+    const closestRoot = element.closest(atvControllerSelector);
+    if (!closestRoot) {
+      return undefined;
+    }
+    let foundRoot;
+    controllersFor(closestRoot).forEach(function (controller) {
+      if (foundRoot) {
+        return;
+      }
+      if (controller === name) {
+        foundRoot = closestRoot;
+        return;
+      }
+    });
+    if (foundRoot) {
+      return foundRoot;
+    }
+    return containingNamedController(closestRoot.parentNode, name);
+  }
+
+  // Find all declared actions for an ATV controller and add listeners
+  function findActions(root, name, actionName, handler) {
+    let actionHandlers = [];
+    function registerAction(element, definitions) {
+      parseActions(definitions).forEach(function (definition) {
+        const [requestedEvent, definedActionName, controller, args] =
+          definition;
+        if (controller && controller !== name) {
+          return;
+        }
+        if (actionName !== definedActionName) {
+          return;
+        }
+        if (outOfScope(element, root, name)) {
+          return;
+        }
+        const callback = function (event) {
+          return handler(event.target, event, args);
+        };
+        actionHandlers.push([element, requestedEvent, callback]);
+        element.addEventListener(requestedEvent, callback);
+      });
+    }
+
+    selectPermutations(
+      root,
+      `${prefix}${name}-action`,
+      function (element, dataAttributeName) {
+        const definitions = `["${element.dataset[dataAttributeName]}"]`;
+        if (definitions) {
+          registerAction(element, definitions);
+        } else {
+          console.error(`Malformed action: ${name}/${dataAttributeName}`);
+        }
+      }
+    );
+
+    selectPermutations(
+      root,
+      `${prefix}${name}-actions`,
+      function (element, dataAttributeName) {
+        const definitions = element.dataset[dataAttributeName];
+        if (definitions) {
+          registerAction(element, definitions);
+        } else {
+          console.error(`Malformed actions: ${name}/${dataAttributeName}`);
+        }
+      }
+    );
+
+    // Stimulus-style action definition (inculding sequences)
+    function buildSequence(element, dataAttributeName) {
+      function invokeNext(sequence, forEvent) {
+        return function (event) {
+          // Complete condition
+          const definition = sequence[0];
+          if (!definition) {
+            return false;
+          }
+
+          // Skip conditions
+          const [requestedEvent, action, controller, args] = definition;
+          const remainder = sequence.slice(1);
+          if (!controller || requestedEvent !== forEvent) {
+            return invokeNext(remainder, forEvent)(event);
+          }
+
+          const atvControllerElement = containingNamedController(
+            event.target,
+            controller
+          );
+          if (!atvControllerElement) {
+            return invokeNext(remainder, forEvent)(event);
+          }
+
+          // Execute conditions
+          const actions =
+            atvRoots.get(atvControllerElement)[controller]?.actions;
+          if (actions) {
+            const func = actions[action];
+            if (func) {
+              const result = func(event.target, event, args);
+              if (result) {
+                return invokeNext(remainder, forEvent)(event);
+              }
+              return false;
+            }
+          }
+          return invokeNext(remainder, forEvent)(event);
+        };
+      }
+
+      const actionList = element.dataset[dataAttributeName];
+      if (!actionList) {
+        return;
+      }
+      const sequence = parseActions(actionList);
+      const eventList = new Set();
+      sequence.forEach(function (definition) {
+        eventList.add(definition[0]);
+      });
+      eventList.forEach(function (forEvent) {
+        let found = false;
+        sequence.forEach(function (definition) {
+          const [requestedEvent] = definition;
+          if (forEvent !== requestedEvent) {
+            return;
+          }
+          found = true;
+        });
+        if (found) {
+          const callback = invokeNext(sequence, forEvent);
+          actionHandlers.push([element, forEvent, callback]);
+          element.addEventListener(forEvent, callback);
+        }
+      });
+    }
+    selectPermutations(
+      root,
+      `${prefix}actions`,
+      function (element, dataAttributeName) {
+        buildSequence(element, dataAttributeName);
+      }
+    );
+    selectPermutations(
+      root,
+      `${prefix}action`,
+      function (element, dataAttributeName) {
+        buildSequence(element, dataAttributeName);
+      }
+    );
+    return actionHandlers;
+  }
+
+  // Find all declared targets for this ATV and provide them to the ATV instance
+  function findTargets(root, name) {
+    const container = root.parentNode;
+    let targets = {};
+
+    selectPermutations(
+      container,
+      `${prefix}${name}-target`,
+      function (element) {
+        if (outOfScope(element, root, name)) {
+          return;
+        }
+        const targetPattern = `${prefix}${name}-target`;
+        const key = dataFor(element, targetPattern);
+        const allKey = `all${pascalize(key)}`;
+
+        if (targets[allKey]) {
+          targets[allKey].push(element);
+        } else if (targets[key]) {
+          targets[allKey] = [targets[key], element];
+          delete targets[key];
+        } else {
+          targets[key] = element;
+        }
+      }
+    );
+
+    return targets;
+  }
+
+  // Find the values data element and provide it to the ATV instance
+  // Assumption:
+  //   all values are in a single data declaration, JSON encoded as a hash
+  function findValues(root, name) {
+    let container = root.parentNode;
+    let values;
+
+    const valuePattern = `${prefix}${name}-values`;
+    selectPermutations(container, valuePattern, function (element) {
+      if (values || outOfScope(element, root, name)) {
+        return;
+      }
+      const data = dataFor(element, valuePattern);
+      if (data) {
+        values = JSON.parse(data);
+      }
+    });
+
+    return values;
+  }
+
+  function cleanupController(controllers, name) {
+    const controller = controllers[name];
+    const handlers = controller.handlers;
+    Object.keys(handlers).forEach(function (key) {
+      const entries = handlers[key];
+      entries.forEach(function (entry) {
+        entry[0].removeEventListener(entry[1], entry[2]);
+      });
+    });
+
+    if (controller.disconnect) {
+      controller.disconnect();
+      controller.disconnect = undefined;
+    }
+  }
+
+  function findControllers(selector, type, callback) {
+    document.querySelectorAll(selector).forEach(function (element) {
+      const root = atvRoots.get(element);
+      if (root && root[type]) {
+        callback(root[type]);
+      }
+    });
+  }
+
+  function createController(root, name, module) {
+    let controllers = atvRoots.get(root);
+    if (!controllers) {
+      controllers = {};
+    }
+    if (controllers[name]) {
+      cleanupController(controllers, name);
+    }
+
+    let controller = {
+      actions: {},
+      handlers: {},
+      name: name,
+      root: root
+    };
+
+    controller.targets = findTargets(root, name);
+    controller.values = findValues(root, name);
+    let callbacks = module.connect(
+      controller.targets,
+      controller.values,
+      root,
+      findControllers
+    );
+    if (typeof callbacks === "function") {
+      callbacks = callbacks();
+    }
+    Object.keys(callbacks).forEach(function (type) {
+      controller.actions[type] = callbacks[type];
+      if (type === "disconnect") {
+        controller.disconnect = callbacks[type];
+      } else {
+        controller.handlers[type] = findActions(
+          root,
+          name,
+          type,
+          callbacks[type]
+        );
+      }
+    });
+
+    controllers[name] = controller;
+    atvRoots.set(root, controllers);
+  }
+
+  // Gather the context for this instance, provide it to the controller instance
+  function registerController(root) {
+    controllersFor(root).forEach(function (name) {
+      let importmapName = `${name}_atv`;
+      Object.keys(importMap).forEach(function (source) {
+        if (source.replace(/_/g, "-").includes(`/${name}-atv`)) {
+          importmapName = importMap[source];
+        }
+      });
+      import(importmapName)
+        .then(function (module) {
+          createController(root, name, module);
+        })
+        .catch(function (error) {
+          console.error("Loading failed:", error);
+        });
+    });
+  }
+
+  function cleanup() {
+    observer.disconnect();
+    atvRoots.forEach(function (controllers) {
+      Object.keys(controllers).forEach(function (name) {
+        cleanupController(controllers, name);
+      });
+    });
+    atvRoots = new Map();
+  }
+
+  function report(type, addedCount) {
+    if (addedCount < 1) {
+      return;
+    }
+    console.log(
+      [
+        `${prefix}controllers: ${atvRoots.size} present`,
+        `${addedCount} added. (${type})`
+      ].join(" / ")
+    );
+  }
+
+  function domWatcher(mutationList) {
+    if (!activated) {
+      return;
+    }
+    let atvRemoved = false;
+    mutationList.forEach(function (mutation) {
+      if (atvRemoved) {
+        return;
+      }
+      if (mutation.type === "childList") {
+        mutation.removedNodes.forEach(function (node) {
+          if (atvRemoved || !node.querySelector) {
+            return;
+          }
+          if (node.dataset) {
+            const data = dataFor(node, `${prefix}controller`);
+            if (data) {
+              atvRemoved = true;
+              return;
+            }
+          }
+          const atv = node.querySelector(atvControllerSelector);
+          if (atv) {
+            atvRemoved = true;
+            return;
+          }
+        });
+      }
+    });
+
+    if (atvRemoved) {
+      cleanup();
+      activate(prefix);
+      return;
+    }
+
+    let addedNodes = new Set();
+    mutationList.forEach(function (mutation) {
+      if (mutation.type === "childList") {
+        mutation.addedNodes.forEach(function (node) {
+          if (!node.parentNode?.querySelector) {
+            return;
+          }
+          node.parentNode
+            .querySelectorAll(atvControllerSelector)
+            .forEach(function (controller) {
+              if (!addedNodes.has(controller) && !atvRoots.has(controller)) {
+                registerController(controller);
+                addedNodes.add(controller);
+              }
+            });
+        });
+      }
+    });
+
+    if (addedNodes.size > 0) {
+      report("mutation", addedNodes.size);
+    }
+  }
+
+  let addedCount = 0;
+  document.querySelectorAll(atvControllerSelector).forEach(function (root) {
+    registerController(root);
+    addedCount += 1;
+  });
+
+  report("activate", addedCount);
+
+  activated = true;
+  const config = { childList: true, subtree: true };
+  observer.observe(document, config);
+}
+
+export { activate };

@@ -58,6 +58,8 @@ Compare this to the [stimulus](https://stimulus.hotwired.dev) equivalent: in par
 
 ## Usage and examples
 
+Run the script `bin/install_rails.rb` from your rails root, or do the following manual steps:
+
 To add to your importmap enabled rails app:
 
 ```
