@@ -50,9 +50,7 @@ const deCommaPattern = /,[\s+]/;
 function pascalize(string) {
   return string
     .split(permutationPattern)
-    .map(function (str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    })
+    .map((str) => str.charAt(0).toUpperCase() + str.slice(1))
     .join("");
 }
 
@@ -91,7 +89,10 @@ function allPermutations(name, callback, prefix = null) {
 function selectPermutations(container, selector, callback) {
   allPermutations(`data-${selector}`, function (variant) {
     container.querySelectorAll(`[${variant}]`).forEach(function (element) {
-      const dataAttributeName = camelize(variant.replace(/^data-/, ""));
+      let dataAttributeName = variant.replace(/^data-/, "");
+      if (!element.dataset[dataAttributeName]) {
+        dataAttributeName = camelize(dataAttributeName);
+      }
       callback(element, dataAttributeName, variant);
     });
   });
@@ -101,9 +102,7 @@ function jsonParseArray(string) {
   if (/^[\[{]/.test(string)) {
     return JSON.parse(string);
   }
-  return string.split(deCommaPattern).map(function (str) {
-    return str.trim();
-  });
+  return string.split(deCommaPattern).map((str) => str.trim());
 }
 
 // Parses out actions:
@@ -138,7 +137,10 @@ function dataFor(element, name) {
   if (!element.dataset) {
     return;
   }
-  let result = element.dataset[name] || element.dataset[camelize(name)];
+  let result = element.dataset[name];
+  if (!result) {
+    result = element.dataset[camelize(name)];
+  }
   if (!result) {
     allPermutations(name, function (perm) {
       if (!result) {

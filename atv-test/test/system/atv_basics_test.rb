@@ -55,15 +55,15 @@ class AtvBasicsTest < ApplicationSystemTestCase
 
     mButton = find("#multi-button")
     assert mButton.has_text? "Count 0"
-    mButton.click 
-    assert mButton.matches_style?('background-color' => 'rgb(0, 0, 255)')
+    mButton.click
+    assert mButton.matches_style?("background-color" => "rgb(0, 0, 255)")
     assert mButton.has_text? "Count 1"
 
     eButtton = find("#e-count")
     assert eButtton.has_text? "Start"
-    eButtton.click 
+    eButtton.click
     assert eButtton.has_text? "Count 2"
-    eButtton.click 
+    eButtton.click
     assert eButtton.has_text? "Count 4"
     assert bCount.has_text? "Count 4"
     assert cCount.has_text? "Count 1"
@@ -90,7 +90,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     assert nCount.has_text? "Count 4"
   end
 
-  test "greeting" do 
+  test "greeting" do
     visit atv_by_example_path
     name = "Test User #{rand(100)}"
     find("#greet-input").set(name)
@@ -98,48 +98,60 @@ class AtvBasicsTest < ApplicationSystemTestCase
     assert find("#greet-out").has_text?("Hello, #{name}!")
   end
 
-  test "values" do 
+  test "values and different naming styles" do
     visit atv_by_example_path
-    output = find("#config-out")
-    assert !output.has_text?("favorite color")
-    find("#config-button").click
-    assert output.has_text?("favorite color")
+    output = find("#config-out1")
+    assert_not output.has_text?("blue")
+    find("#config-button1").click
+    assert output.has_text?("blue")
+
+    visit atv_by_example_path
+    output = find("#config-out2")
+    assert_not output.has_text?("yellow")
+    find("#config-button2").click
+    assert output.has_text?("yellow")
+
+    visit atv_by_example_path
+    output = find("#config-out3")
+    assert_not output.has_text?("green")
+    find("#config-button3").click
+    assert output.has_text?("green")
   end
 
-  test "targets" do 
+  test "targets" do
     visit atv_by_example_path
     output = find("span#multiply-out")
-    assert !output.has_text?("60")
-    find("#multiply-button").click  
+    assert_not output.has_text?("60")
+    find("#multiply-button").click
     assert output.has_text?("60")
   end
 
-  test "outlets" do 
+  test "outlets" do
     visit atv_by_example_path
     output = find("#inter-out")
-    assert !output.has_text?("14")
-    find("#inter-button").click  
+    assert_not output.has_text?("14")
+    find("#inter-button").click
     assert output.has_text?("14")
   end
 
-  test "events" do 
+  test "events" do
     visit atv_by_example_path
     input = find("#name")
     input.native.send_keys("ab5533aa")
     assert_equal "abaa", input.value
   end
 
-  test "sequence" do 
+  test "sequence" do
     visit atv_by_example_path
     button = find("#f-button")
     quotient = find("#quotient")
     result = find("#result")
     assert quotient.has_text?("0")
     assert result.has_text?("0")
-    button.click 
+    button.click
     assert quotient.has_text?("4")
     assert result.has_text?("24")
-    fill_in 'divisor', with: 0
+    fill_in "divisor", with: 0
     button.click
     assert quotient.has_text?("You can't divide by zero")
     assert result.has_text?("24")
@@ -148,25 +160,25 @@ class AtvBasicsTest < ApplicationSystemTestCase
   test "adding and removing stuff" do
     visit atv_by_example_path
     assert page.has_text?("Connected", count: 2)
-    assert !page.has_text?("Not yet connected")
+    assert_not page.has_text?("Not yet connected")
     create_button = find(".connect-button")
-    create_button.click 
-    assert !page.has_text?("Not yet connected")
+    create_button.click
+    assert_not page.has_text?("Not yet connected")
     assert page.has_text?("Connected", count: 3)
-    create_button.click 
-    assert !page.has_text?("Not yet connected")
+    create_button.click
+    assert_not page.has_text?("Not yet connected")
     assert page.has_text?("Connected", count: 4)
-    last_button = page.all(".connect-button").last 
-    last_button.click 
-    assert !page.has_text?("Not yet connected")
+    last_button = page.all(".connect-button").last
+    last_button.click
+    assert_not page.has_text?("Not yet connected")
     assert page.has_text?("Connected", count: 5)
 
     # Disconnect
 
     disconnect_button = find("#disconnect-button")
     assert page.has_text?("Disconnect", count: 1)
-    assert !page.has_text?("Disconnected")
-    disconnect_button.click 
+    assert_not page.has_text?("Disconnected")
+    disconnect_button.click
     assert page.has_text?("Disconnect", count: 1)
     assert page.has_text?("Disconnected")
     assert page.has_text?("Connected", count: 4)
