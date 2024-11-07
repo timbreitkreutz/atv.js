@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const _version = "0.0.28";
+const _version = "0.0.29";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
@@ -145,11 +145,17 @@ function dataFor(element, name) {
   return result;
 }
 
+let nameSpaces = new Set;
+
 /*
  * Main activation process for ATV.  You can invoke many of these with
  * different prefixes and they will each have their own data.
  */
 function activate(prefix = "atv") {
+  if (nameSpaces.has(prefix)) {
+    return;
+  }
+  nameSpaces.add(prefix);
   let atvRoots = new Map();
   let activated = false;
   const observer = new MutationObserver(domWatcher);
