@@ -38,18 +38,16 @@ const importMap = JSON.parse(
   document.querySelector("script[type='importmap']").innerText
 ).imports;
 
-// Allow for any permutation of underscores and dashes in the data parts
-// of the DOM elements. No more wasting time on guessing the permutation
-// stimulus style!
-
 /* General functions, not tied to a specific activation */
 
-const permutationPattern = /[\-_]/;
+/* Variant in the context of ATV means either dash-case or snake_case */
+const variantPattern = /[\-_]/;
 const deCommaPattern = /,[\s+]/;
 
 function pascalize(string) {
   return string
-    .split(permutationPattern)
+    .toLowerCase()
+    .split(variantPattern)
     .map((str) => str.charAt(0).toUpperCase() + str.slice(1))
     .join("");
 }
@@ -59,8 +57,9 @@ function camelize(string) {
   return pascalized.charAt(0).toLowerCase() + pascalized.slice(1);
 }
 
-function allPermutations(name, callback, prefix = null) {
-  const words = name.split(permutationPattern);
+/* Takes a string, invokes callback for each variation of underscores and dashes */
+function allVariants(name, callback, prefix = null) {
+  const words = name.split(variantPattern);
   if (words.length < 2) {
     if (prefix) {
       callback(`${prefix}-${name}`);
@@ -71,23 +70,15 @@ function allPermutations(name, callback, prefix = null) {
     return;
   }
   if (prefix) {
-    allPermutations(
-      words.slice(1).join("-"),
-      callback,
-      `${prefix}-${words[0]}`
-    );
-    allPermutations(
-      words.slice(1).join("-"),
-      callback,
-      `${prefix}_${words[0]}`
-    );
+    allVariants(words.slice(1).join("-"), callback, `${prefix}-${words[0]}`);
+    allVariants(words.slice(1).join("-"), callback, `${prefix}_${words[0]}`);
     return;
   }
-  allPermutations(words.slice(1).join("-"), callback, `${words[0]}`);
+  allVariants(words.slice(1).join("-"), callback, `${words[0]}`);
 }
 
-function selectPermutations(container, selector, callback) {
-  allPermutations(`data-${selector}`, function (variant) {
+function selectVariants(container, selector, callback) {
+  allVariants(`data-${selector}`, function (variant) {
     container.querySelectorAll(`[${variant}]`).forEach(function (element) {
       let dataAttributeName = variant.replace(/^data-/, "");
       if (!element.dataset[dataAttributeName]) {
@@ -142,7 +133,7 @@ function dataFor(element, name) {
     result = element.dataset[camelize(name)];
   }
   if (!result) {
-    allPermutations(name, function (perm) {
+    allVariants(name, function (perm) {
       if (!result) {
         result = element.dataset[perm];
       }
@@ -168,7 +159,7 @@ function activate(prefix = "atv-") {
 
   // Calculate selector for all controlers
   let selectors = [];
-  allPermutations(`data-${prefix}controller`, function (perm) {
+  allVariants(`data-${prefix}controller`, function (perm) {
     selectors.push(`[${perm}]`);
   });
   const atvControllerSelector = selectors.join(",");
@@ -177,7 +168,7 @@ function activate(prefix = "atv-") {
   // skip if it's not the nearest enclosing controller
   function outOfScope(element, root, name) {
     // There should only be one of these.
-    // Behavior undefined if it finds more than one permutation.
+    // Behavior undefined if it finds more than one variant.
     const closestRoot = element.closest(atvControllerSelector);
     let out = false;
     controllersFor(closestRoot).forEach(function (controller) {
@@ -234,7 +225,7 @@ function activate(prefix = "atv-") {
       });
     }
 
-    selectPermutations(
+    selectVariants(
       root,
       `${prefix}${name}-action`,
       function (element, dataAttributeName) {
@@ -247,7 +238,7 @@ function activate(prefix = "atv-") {
       }
     );
 
-    selectPermutations(
+    selectVariants(
       root,
       `${prefix}${name}-actions`,
       function (element, dataAttributeName) {
@@ -262,6 +253,8 @@ function activate(prefix = "atv-") {
 
     // Stimulus-style action definition (inculding sequences)
     function buildSequence(element, dataAttributeName) {
+      const actionList = element.dataset[dataAttributeName];
+
       function invokeNext(sequence, forEvent) {
         return function (event) {
           // Complete condition
@@ -302,7 +295,6 @@ function activate(prefix = "atv-") {
         };
       }
 
-      const actionList = element.dataset[dataAttributeName];
       if (!actionList) {
         return;
       }
@@ -327,14 +319,14 @@ function activate(prefix = "atv-") {
         }
       });
     }
-    selectPermutations(
+    selectVariants(
       root,
       `${prefix}actions`,
       function (element, dataAttributeName) {
         buildSequence(element, dataAttributeName);
       }
     );
-    selectPermutations(
+    selectVariants(
       root,
       `${prefix}action`,
       function (element, dataAttributeName) {
@@ -349,27 +341,23 @@ function activate(prefix = "atv-") {
     const container = root.parentNode;
     let targets = {};
 
-    selectPermutations(
-      container,
-      `${prefix}${name}-target`,
-      function (element) {
-        if (outOfScope(element, root, name)) {
-          return;
-        }
-        const targetPattern = `${prefix}${name}-target`;
-        const key = dataFor(element, targetPattern);
-        const allKey = `all${pascalize(key)}`;
-
-        if (targets[allKey]) {
-          targets[allKey].push(element);
-        } else if (targets[key]) {
-          targets[allKey] = [targets[key], element];
-          delete targets[key];
-        } else {
-          targets[key] = element;
-        }
+    selectVariants(container, `${prefix}${name}-target`, function (element) {
+      if (outOfScope(element, root, name)) {
+        return;
       }
-    );
+      const targetPattern = `${prefix}${name}-target`;
+      const key = dataFor(element, targetPattern);
+      const allKey = `all${pascalize(key)}`;
+
+      if (targets[allKey]) {
+        targets[allKey].push(element);
+      } else if (targets[key]) {
+        targets[allKey] = [targets[key], element];
+        delete targets[key];
+      } else {
+        targets[key] = element;
+      }
+    });
 
     return targets;
   }
@@ -382,7 +370,7 @@ function activate(prefix = "atv-") {
     let values;
 
     const valuePattern = `${prefix}${name}-values`;
-    selectPermutations(container, valuePattern, function (element) {
+    selectVariants(container, valuePattern, function (element) {
       if (values || outOfScope(element, root, name)) {
         return;
       }
