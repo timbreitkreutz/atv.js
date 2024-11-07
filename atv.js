@@ -77,12 +77,13 @@ function allVariants(name, callback, prefix = null) {
     }
     return;
   }
+  const newName = words.slice(1).join("-");
   if (prefix) {
-    allVariants(words.slice(1).join("-"), callback, `${prefix}-${words[0]}`);
-    allVariants(words.slice(1).join("-"), callback, `${prefix}_${words[0]}`);
-    return;
+    allVariants(newName, callback, `${prefix}-${words[0]}`);
+    allVariants(newName, callback, `${prefix}_${words[0]}`);
+  } else {
+    allVariants(newName, callback, `${words[0]}`);
   }
-  allVariants(words.slice(1).join("-"), callback, `${words[0]}`);
 }
 
 /* Invokes callback for each element found with the data attribute set */
@@ -145,8 +146,8 @@ function activate(prefix = "atv") {
   let atvRoots = new Map();
   let activated = false;
   const observer = new MutationObserver(domWatcher);
-  if (prefix && !/-$/.test(prefix)) {
-    prefix = `${prefix}-`
+  if (prefix && !/\-$/.test(prefix)) {
+    prefix = `${prefix}-`;
   }
 
   // Find any controlles attached to element
