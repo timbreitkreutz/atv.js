@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const _version = "0.0.27";
+const _version = "0.0.28";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
@@ -85,8 +85,9 @@ function allVariants(name, callback, prefix = null) {
   allVariants(words.slice(1).join("-"), callback, `${words[0]}`);
 }
 
-function selectVariants(container, selector, callback) {
-  allVariants(`data-${selector}`, function (variant) {
+/* Invokes callback for each element found with the data attribute set */
+function selectVariants(container, dataAttribute, callback) {
+  allVariants(`data-${dataAttribute}`, function (variant) {
     container.querySelectorAll(`[${variant}]`).forEach(function (element) {
       let dataAttributeName = variant.replace(/^data-/, "");
       if (!element.dataset[dataAttributeName]) {
@@ -97,12 +98,12 @@ function selectVariants(container, selector, callback) {
   });
 }
 
-// Parses out actions:
+// Parses actions in the data attributes:
 // "requestedEvent->controller#actionName(args)" =>
 //      requestedEvent, actionName, controller, args
 // "click" => click, click, null, null
-let parseActions = function (string) {
-  const definitions = jsonParseArray(string);
+let parseActions = function (dataAttribute) {
+  const definitions = jsonParseArray(dataAttribute);
   return definitions.map(function (definition) {
     let [requestedEvent, fullAction] = definition.split(/[\-=]>/);
     if (!fullAction) {
@@ -131,19 +132,22 @@ function dataFor(element, name) {
   }
   let result = element.getAttribute(`data-${name}`);
   if (!result) {
-    allVariants(name, function (perm) {
+    allVariants(name, function (variant) {
       if (!result) {
-        result = element.dataset[perm];
+        result = element.dataset[variant];
       }
     });
   }
   return result;
 }
 
-function activate(prefix = "atv-") {
+function activate(prefix = "atv") {
   let atvRoots = new Map();
   let activated = false;
   const observer = new MutationObserver(domWatcher);
+  if (prefix && !/-$/.test(prefix)) {
+    prefix = `${prefix}-`
+  }
 
   // Find any controlles attached to element
   function controllersFor(element) {
@@ -157,8 +161,8 @@ function activate(prefix = "atv-") {
 
   // Calculate selector for all controlers
   let selectors = [];
-  allVariants(`data-${prefix}controller`, function (perm) {
-    selectors.push(`[${perm}]`);
+  allVariants(`data-${prefix}controller`, function (variant) {
+    selectors.push(`[${variant}]`);
   });
   const atvControllerSelector = selectors.join(",");
 
