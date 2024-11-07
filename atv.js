@@ -42,7 +42,6 @@ const importMap = JSON.parse(
 
 /* Variant in the context of ATV means either dash-case or snake_case */
 const variantPattern = /[\-_]/;
-const deCommaPattern = /,[\s+]/;
 
 function pascalize(string) {
   return string
@@ -55,6 +54,15 @@ function pascalize(string) {
 function camelize(string) {
   const pascalized = pascalize(string);
   return pascalized.charAt(0).toLowerCase() + pascalized.slice(1);
+}
+
+const deCommaPattern = /,[\s+]/;
+
+function jsonParseArray(string) {
+  if (/^[\[{]/.test(string)) {
+    return JSON.parse(string);
+  }
+  return string.split(deCommaPattern).map((str) => str.trim());
 }
 
 /* Takes a string, invokes callback for each variation of underscores and dashes */
@@ -89,13 +97,6 @@ function selectVariants(container, selector, callback) {
   });
 }
 
-function jsonParseArray(string) {
-  if (/^[\[{]/.test(string)) {
-    return JSON.parse(string);
-  }
-  return string.split(deCommaPattern).map((str) => str.trim());
-}
-
 // Parses out actions:
 // "requestedEvent->controller#actionName(args)" =>
 //      requestedEvent, actionName, controller, args
@@ -128,10 +129,7 @@ function dataFor(element, name) {
   if (!element.dataset) {
     return;
   }
-  let result = element.dataset[name];
-  if (!result) {
-    result = element.dataset[camelize(name)];
-  }
+  let result = element.getAttribute(`data-${name}`);
   if (!result) {
     allVariants(name, function (perm) {
       if (!result) {
