@@ -77,12 +77,12 @@ function allVariants(name, callback, prefix = null) {
     }
     return;
   }
-  const newName = words.slice(1).join("-");
+  const remainder = words.slice(1).join("-");
   if (prefix) {
-    allVariants(newName, callback, `${prefix}-${words[0]}`);
-    allVariants(newName, callback, `${prefix}_${words[0]}`);
+    allVariants(remainder, callback, `${prefix}-${words[0]}`);
+    allVariants(remainder, callback, `${prefix}_${words[0]}`);
   } else {
-    allVariants(newName, callback, `${words[0]}`);
+    allVariants(remainder, callback, `${words[0]}`);
   }
 }
 
@@ -127,6 +127,7 @@ let parseActions = function (dataAttribute) {
   });
 };
 
+/* Extracts the value of the given data attribute from the element */
 function dataFor(element, name) {
   if (!element.dataset) {
     return;
@@ -142,6 +143,11 @@ function dataFor(element, name) {
   return result;
 }
 
+/* 
+ * Main activation process for ATV.
+ * You can invoke many of these with different prefixes and they will each have their
+ * own data.
+ */
 function activate(prefix = "atv") {
   let atvRoots = new Map();
   let activated = false;
@@ -228,6 +234,7 @@ function activate(prefix = "atv") {
       });
     }
 
+    // First ATV-style, with the controller name in the attribute name, singular
     selectVariants(
       root,
       `${prefix}${name}-action`,
@@ -241,6 +248,7 @@ function activate(prefix = "atv") {
       }
     );
 
+    // Next ATV-style, with the controller name in the attribute name, multiple
     selectVariants(
       root,
       `${prefix}${name}-actions`,
@@ -254,25 +262,28 @@ function activate(prefix = "atv") {
       }
     );
 
-    // Stimulus-style action definition (inculding sequences)
+    // Stimulus-style action definition (including sequences)
     function buildSequence(element, dataAttributeName) {
       const actionList = element.dataset[dataAttributeName];
 
+      // Invoke dynamically each time, this checks the return value to
+      // decide each time whether to continue.
       function invokeNext(sequence, forEvent) {
         return function (event) {
-          // Complete condition
+          // We are done if the sequence list is used up.
           const definition = sequence[0];
           if (!definition) {
             return false;
           }
 
-          // Skip conditions
+          // Don't execute if it's for a different action
           const [requestedEvent, action, controller, args] = definition;
           const remainder = sequence.slice(1);
           if (!controller || requestedEvent !== forEvent) {
             return invokeNext(remainder, forEvent)(event);
           }
 
+          // Skip if this isn't connecting to the "in scope" controller
           const atvControllerElement = containingNamedController(
             event.target,
             controller
@@ -281,7 +292,7 @@ function activate(prefix = "atv") {
             return invokeNext(remainder, forEvent)(event);
           }
 
-          // Execute conditions
+          // Actually run it here
           const actions =
             atvRoots.get(atvControllerElement)[controller]?.actions;
           if (actions) {
@@ -294,6 +305,8 @@ function activate(prefix = "atv") {
               return false;
             }
           }
+
+          // Finally send it along if there are no actions there.
           return invokeNext(remainder, forEvent)(event);
         };
       }
@@ -322,20 +335,15 @@ function activate(prefix = "atv") {
         }
       });
     }
-    selectVariants(
-      root,
-      `${prefix}actions`,
-      function (element, dataAttributeName) {
-        buildSequence(element, dataAttributeName);
-      }
-    );
-    selectVariants(
-      root,
-      `${prefix}action`,
-      function (element, dataAttributeName) {
-        buildSequence(element, dataAttributeName);
-      }
-    );
+    ['', 's'].forEach(function(plural) {
+      selectVariants(
+        root,
+        `${prefix}action${plural}`,
+        function (element, dataAttributeName) {
+          buildSequence(element, dataAttributeName);
+        }
+      );
+    });
     return actionHandlers;
   }
 
