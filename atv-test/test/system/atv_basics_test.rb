@@ -144,10 +144,12 @@ class AtvBasicsTest < ApplicationSystemTestCase
   test "sequence" do
     visit atv_by_example_path
     button = find("#f-button")
+    extra = find("#multi-out")
     quotient = find("#quotient")
     result = find("#result")
     assert quotient.has_text?("0")
     assert result.has_text?("0")
+    assert !extra.has_text?("DONE")
     button.click
     assert quotient.has_text?("4")
     assert result.has_text?("24")
@@ -155,6 +157,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     button.click
     assert quotient.has_text?("You can't divide by zero")
     assert result.has_text?("24")
+    assert extra.has_text?("DONE")
   end
 
   test "adding and removing stuff" do

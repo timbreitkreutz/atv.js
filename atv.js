@@ -65,7 +65,8 @@ function jsonParseArray(string) {
   return string.split(deCommaPattern).map((str) => str.trim());
 }
 
-/* Takes a string, invokes callback for each variation of underscores and dashes */
+/* Takes a string, invokes callback for each variation of
+ * underscores and dashes */
 function allVariants(name, callback, prefix = null) {
   const words = name.split(variantPattern);
   if (words.length < 2) {
@@ -86,7 +87,8 @@ function allVariants(name, callback, prefix = null) {
   }
 }
 
-/* Invokes callback for each element found with the data attribute set */
+/* Invokes callback for each element found with the
+ * data attribute set */
 function selectVariants(container, dataAttribute, callback) {
   allVariants(`data-${dataAttribute}`, function (variant) {
     container.querySelectorAll(`[${variant}]`).forEach(function (element) {
@@ -143,16 +145,15 @@ function dataFor(element, name) {
   return result;
 }
 
-/* 
- * Main activation process for ATV.
- * You can invoke many of these with different prefixes and they will each have their
- * own data.
+/*
+ * Main activation process for ATV.  You can invoke many of these with
+ * different prefixes and they will each have their own data.
  */
 function activate(prefix = "atv") {
   let atvRoots = new Map();
   let activated = false;
   const observer = new MutationObserver(domWatcher);
-  if (prefix && !/\-$/.test(prefix)) {
+  if (prefix && !/-$/.test(prefix)) {
     prefix = `${prefix}-`;
   }
 
@@ -209,6 +210,8 @@ function activate(prefix = "atv") {
     }
     return containingNamedController(closestRoot.parentNode, name);
   }
+
+  let sequences = new Set();
 
   // Find all declared actions for an ATV controller and add listeners
   function findActions(root, name, actionName, handler) {
@@ -269,6 +272,7 @@ function activate(prefix = "atv") {
       // Invoke dynamically each time, this checks the return value to
       // decide each time whether to continue.
       function invokeNext(sequence, forEvent) {
+        // Inner function is an event handler and will be hooked into the DOM
         return function (event) {
           // We are done if the sequence list is used up.
           const definition = sequence[0];
@@ -306,7 +310,7 @@ function activate(prefix = "atv") {
             }
           }
 
-          // Finally send it along if there are no actions there.
+          // Finally send it along if there were no actions there.
           return invokeNext(remainder, forEvent)(event);
         };
       }
@@ -335,11 +339,15 @@ function activate(prefix = "atv") {
         }
       });
     }
-    ['', 's'].forEach(function(plural) {
+    ["", "s"].forEach(function (plural) {
       selectVariants(
         root,
         `${prefix}action${plural}`,
         function (element, dataAttributeName) {
+          if (sequences.has(element)) {
+            return;
+          }
+          sequences.add(element);
           buildSequence(element, dataAttributeName);
         }
       );

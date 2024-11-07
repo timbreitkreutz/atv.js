@@ -14,6 +14,10 @@ function connect(targets) {
         targets.product.innerText = product;
       }
       return product;
+    },
+    blur: function(actor) {
+      targets.extra.innerText = "DONE";
+      return true;
     }
   };
 }
