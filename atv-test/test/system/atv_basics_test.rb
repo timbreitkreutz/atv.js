@@ -185,5 +185,8 @@ class AtvBasicsTest < ApplicationSystemTestCase
     assert page.has_text?("Disconnect", count: 1)
     assert page.has_text?("Disconnected")
     assert page.has_text?("Connected", count: 4)
+    input = find("#name")
+    input.native.send_keys("ab5533aa")
+    assert_equal "abaa", input.value
   end
 end

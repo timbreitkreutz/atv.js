@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const _version = "0.0.29";
+const _version = "0.0.30";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
@@ -505,6 +505,7 @@ function activate(prefix = "atv") {
       });
     });
     atvRoots = new Map();
+    nameSpaces.delete(prefix);
   }
 
   function report(type, addedCount) {
