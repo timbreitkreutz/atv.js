@@ -1,5 +1,5 @@
 /*global
-  console, document, window
+  console, document, MutationObserver
 */
 
 //
@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const _version = "0.0.30";
+const version = "0.0.31";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
@@ -41,7 +41,7 @@ const importMap = JSON.parse(
 /* General functions, not tied to a specific activation */
 
 /* Variant in the context of ATV means either dash-case or snake_case */
-const variantPattern = /[\-_]/;
+const variantPattern = /[-_]/;
 
 function pascalize(string) {
   return string
@@ -59,7 +59,7 @@ function camelize(string) {
 const deCommaPattern = /,[\s+]/;
 
 function jsonParseArray(string) {
-  if (/^[\[{]/.test(string)) {
+  if (/^[[{]/.test(string)) {
     return JSON.parse(string);
   }
   return string.split(deCommaPattern).map((str) => str.trim());
@@ -108,7 +108,7 @@ function selectVariants(container, dataAttribute, callback) {
 let parseActions = function (dataAttribute) {
   const definitions = jsonParseArray(dataAttribute);
   return definitions.map(function (definition) {
-    let [requestedEvent, fullAction] = definition.split(/[\-=]>/);
+    let [requestedEvent, fullAction] = definition.split(/[-=]>/);
     if (!fullAction) {
       fullAction = requestedEvent;
       requestedEvent = requestedEvent.split(/[#(),]/)[0];
@@ -145,7 +145,7 @@ function dataFor(element, name) {
   return result;
 }
 
-let nameSpaces = new Set;
+let nameSpaces = new Set();
 
 /*
  * Main activation process for ATV.  You can invoke many of these with
@@ -196,7 +196,7 @@ function activate(prefix = "atv") {
   }
 
   // Find the nearest named controller for an element
-  function containingNamedController(element, name) {
+  function controllerFor(element, name) {
     const closestRoot = element.closest(atvControllerSelector);
     if (!closestRoot) {
       return undefined;
@@ -214,7 +214,7 @@ function activate(prefix = "atv") {
     if (foundRoot) {
       return foundRoot;
     }
-    return containingNamedController(closestRoot.parentNode, name);
+    return controllerFor(closestRoot.parentNode, name);
   }
 
   let sequences = new Set();
@@ -294,10 +294,7 @@ function activate(prefix = "atv") {
           }
 
           // Skip if this isn't connecting to the "in scope" controller
-          const atvControllerElement = containingNamedController(
-            event.target,
-            controller
-          );
+          const atvControllerElement = controllerFor(event.target, controller);
           if (!atvControllerElement) {
             return invokeNext(remainder, forEvent)(event);
           }
@@ -508,14 +505,16 @@ function activate(prefix = "atv") {
     nameSpaces.delete(prefix);
   }
 
+  const quiet = !document.querySelector(`[data-${prefix}report="true"]`);
   function report(type, addedCount) {
-    if (addedCount < 1) {
+    if (quiet || addedCount < 1) {
       return;
     }
     console.log(
       [
         `${prefix}controllers: ${atvRoots.size} present`,
-        `${addedCount} added. (${type})`
+        `${addedCount} added. (${type})`,
+        `v${version}`
       ].join(" / ")
     );
   }

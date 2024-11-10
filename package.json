@@ -1,10 +1,10 @@
 {
   "name": "@sbrew.com/atv",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "description": "Classless JS framework for Rails",
   "main": "atv.js",
   "scripts": {
-    "test": "cd atv-test; bin/rails test:system"
+    "test": "bin/build"
   },
   "repository": {
     "type": "git",
@@ -25,5 +25,9 @@
   "module": "atv.js",
   "files": [
     "atv.js"
-  ]
+  ],
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "prettier": "3.3.3"
+  }
 }

@@ -102,6 +102,9 @@ If you like this idea and want to help out please join or start a discussion her
 ### Credo
 
 * Keep It Simple, Sam
-* atv.js will be formatted with `prettier --trailing-comma none`
-* I reserve the right to make atv.js pass JSlint (browser, whitespace options-- will need a little massaging each time unfortunately) at any given time. Incoming PRs must not add new JSLint violations.
-* where there is a conflict, `prettier --trailing-comma none` trumps JSlint
+* Stick to functional style with minimum fuss, avoid classes or forcing user to program with any
+other parts of JavaScript. 
+* Linters/formatters:  applied in the following sequence, with manual adjustments as necessary:
+    * jslint.mjs to the extent the following two will be able to run correctly
+    * eslint
+    * prettier

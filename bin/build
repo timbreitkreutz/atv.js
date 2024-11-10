@@ -1,0 +1,15 @@
+#!/bin/bash
+
+
+echo "Check for any helpful new messages from JSlint, this step is not a showstoper"
+node jslint.mjs --browser --devel --white atv.js
+
+npx eslint atv.js || quit "Please fix eslint"
+npx prettier --trailing-comma none atv.js --write
+
+cd atv-test
+bin/rails assets:clobber
+bin/rails assets:precompile
+bin/rails test:system || quit "Please fix tests"
+
+echo "Build succeeded"
