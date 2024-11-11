@@ -151,15 +151,15 @@ let activated = new Set();
 
 /* --- Main activation function --- */
 function activate(prefix = "atv") {
+  const observer = new MutationObserver(domWatcher);
+  if (prefix && !/-$/.test(prefix)) {
+    prefix = `${prefix}-`;
+  }
   if (activated.has(prefix)) {
     return;
   }
 
   let atvRoots = new Map(); // contains all the ATV controller state
-  const observer = new MutationObserver(domWatcher);
-  if (prefix && !/-$/.test(prefix)) {
-    prefix = `${prefix}-`;
-  }
 
   // Find any names of controllers attached to given element
   function controllersFor(element) {
