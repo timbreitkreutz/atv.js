@@ -31,14 +31,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.0.31";
+const version = "0.1.0";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
   document.querySelector("script[type='importmap']").innerText
 ).imports;
 
-/* General functions, not tied to a specific activation */
+/* --- General functions, not tied to a specific activation --- */
 
 /* Variant in the context of ATV means either dash-case or snake_case */
 const variantPattern = /[-_]/;
@@ -101,10 +101,11 @@ function selectVariants(container, dataAttribute, callback) {
   });
 }
 
-// Parses actions in the data attributes:
-// "requestedEvent->controller#actionName(args)" =>
-//      requestedEvent, actionName, controller, args
-// "click" => click, click, null, null
+/* Parses actions in the data attributes:
+ * "requestedEvent->controller#actionName(args)" =>
+ *      requestedEvent, actionName, controller, args
+ * "click" => click, click, null, null
+ */
 let parseActions = function (dataAttribute) {
   const definitions = jsonParseArray(dataAttribute);
   return definitions.map(function (definition) {
@@ -131,7 +132,7 @@ let parseActions = function (dataAttribute) {
 
 /* Extracts the value of the given data attribute from the element */
 function dataFor(element, name) {
-  if (!element.dataset) {
+  if (!element?.dataset) {
     return;
   }
   let result = element.getAttribute(`data-${name}`);
@@ -145,25 +146,22 @@ function dataFor(element, name) {
   return result;
 }
 
-let nameSpaces = new Set();
+/* Keep track of which namespaces have been activated already */
+let activated = new Set();
 
-/*
- * Main activation process for ATV.  You can invoke many of these with
- * different prefixes and they will each have their own data.
- */
+/* --- Main activation function --- */
 function activate(prefix = "atv") {
-  if (nameSpaces.has(prefix)) {
+  if (activated.has(prefix)) {
     return;
   }
-  nameSpaces.add(prefix);
-  let atvRoots = new Map();
-  let activated = false;
+
+  let atvRoots = new Map(); // contains all the ATV controller state
   const observer = new MutationObserver(domWatcher);
   if (prefix && !/-$/.test(prefix)) {
     prefix = `${prefix}-`;
   }
 
-  // Find any controlles attached to element
+  // Find any names of controllers attached to given element
   function controllersFor(element) {
     const list = dataFor(element, `${prefix}controller`);
     if (list) {
@@ -494,6 +492,7 @@ function activate(prefix = "atv") {
     });
   }
 
+  // Cleans up all state for given prefix
   function cleanup() {
     observer.disconnect();
     atvRoots.forEach(function (controllers) {
@@ -502,9 +501,10 @@ function activate(prefix = "atv") {
       });
     });
     atvRoots = new Map();
-    nameSpaces.delete(prefix);
+    activated.delete(prefix);
   }
 
+  // Optional console output mainly for development
   const quiet = !document.querySelector(`[data-${prefix}report="true"]`);
   function report(type, addedCount) {
     if (quiet || addedCount < 1) {
@@ -520,7 +520,7 @@ function activate(prefix = "atv") {
   }
 
   function domWatcher(mutationList) {
-    if (!activated) {
+    if (!activated.has(prefix)) {
       return;
     }
     let atvRemoved = false;
@@ -533,12 +533,10 @@ function activate(prefix = "atv") {
           if (atvRemoved || !node.querySelector) {
             return;
           }
-          if (node.dataset) {
-            const data = dataFor(node, `${prefix}controller`);
-            if (data) {
-              atvRemoved = true;
-              return;
-            }
+          const data = dataFor(node, `${prefix}controller`);
+          if (data) {
+            atvRemoved = true;
+            return;
           }
           const atv = node.querySelector(atvControllerSelector);
           if (atv) {
@@ -549,12 +547,14 @@ function activate(prefix = "atv") {
       }
     });
 
+    // Always cleanup and restart if something is removed
     if (atvRemoved) {
       cleanup();
       activate(prefix);
       return;
     }
 
+    // New nodes can be more safely added to an existing setup
     let addedNodes = new Set();
     mutationList.forEach(function (mutation) {
       if (mutation.type === "childList") {
@@ -587,7 +587,7 @@ function activate(prefix = "atv") {
 
   report("activate", addedCount);
 
-  activated = true;
+  activated.add(prefix);
   const config = { childList: true, subtree: true };
   observer.observe(document, config);
 }

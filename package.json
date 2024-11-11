@@ -1,7 +1,7 @@
 {
   "name": "@sbrew.com/atv",
-  "version": "0.0.31",
-  "description": "Classless JS framework for Rails",
+  "version": "0.1.0",
+  "description": "Functional JS framework for Rails",
   "main": "atv.js",
   "scripts": {
     "test": "bin/build"

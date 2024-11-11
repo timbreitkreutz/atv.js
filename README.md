@@ -70,7 +70,7 @@ Then add the following code to your global application layout (or global JavaScr
 
 ```js
 <script type="module">
-  import { activate } from 'atv';
+  import { activate } from '@sbrew.com/atv';
 
   activate();
 </script>
@@ -80,7 +80,7 @@ Right now all the features of ATV can be seen in action at [ATV By Example](http
 
 ## Coming Soon!
 
-I'll be adding more tests and documentation.
+I'll be continuing to add more tests and documentation.
 
 If there's demand, the following things might get added:
 * Something closer to the 'window' events of stimulus
@@ -102,9 +102,8 @@ If you like this idea and want to help out please join or start a discussion her
 ### Credo
 
 * Keep It Simple, Sam
-* Stick to functional style with minimum fuss, avoid classes or forcing user to program with any
-other parts of JavaScript. 
+* Stick to functional style (a la Crockford) with minimum fuss, avoid classes or forcing user to program with any bad parts of JavaScript. 
 * Linters/formatters:  applied in the following sequence, with manual adjustments as necessary:
-    * jslint.mjs to the extent the following two will be able to run correctly
-    * eslint
-    * prettier
+    * `node jslint.mjs --browser --devel --white atv.js` to the extent the following two will be able to run correctly
+    * `npx eslint atv.js`
+    * `npx prettier --trailing-comma none atv.js --write`
