@@ -45,14 +45,13 @@ const variantPattern = /[-_]/;
 
 function pascalize(string) {
   return string
-    .toLowerCase()
     .split(variantPattern)
     .map((str) => str.charAt(0).toUpperCase() + str.slice(1))
     .join("");
 }
 
 function camelize(string) {
-  const pascalized = pascalize(string);
+  const pascalized = pascalize(string.toLowerCase());
   return pascalized.charAt(0).toLowerCase() + pascalized.slice(1);
 }
 
