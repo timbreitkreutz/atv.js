@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.1.1";
+const version = "0.1.2";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
@@ -367,11 +367,14 @@ function activate(prefix = "atv") {
       const targetPattern = `${prefix}${name}-target`;
       const key = dataFor(element, targetPattern);
       const allKey = `all${pascalize(key)}`;
+      const pluralKey = `${key}s`;
 
       if (targets[allKey]) {
         targets[allKey].push(element);
+        targets[pluralKey].push(element);
       } else if (targets[key]) {
         targets[allKey] = [targets[key], element];
+        targets[pluralKey] = [targets[key], element];
         delete targets[key];
       } else {
         targets[key] = element;

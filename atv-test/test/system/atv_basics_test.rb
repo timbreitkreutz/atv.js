@@ -124,6 +124,11 @@ class AtvBasicsTest < ApplicationSystemTestCase
     assert_not output.has_text?("60")
     find("#multiply-button").click
     assert output.has_text?("60")
+
+    output = find("span#multiply2-out")
+    assert_not output.has_text?("2730")
+    find("#multiply2-button").click
+    assert output.has_text?("2730")
   end
 
   test "outlets" do
