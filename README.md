@@ -107,3 +107,6 @@ If you like this idea and want to help out please join or start a discussion her
     * `node jslint.mjs --browser --devel --white atv.js` to the extent the following two will be able to run correctly
     * `npx eslint atv.js`
     * `npx prettier --trailing-comma none atv.js --write`
+
+
+[![0 dependencies!](https://0dependencies.dev/0dependencies.svg)](https://0dependencies.dev)
