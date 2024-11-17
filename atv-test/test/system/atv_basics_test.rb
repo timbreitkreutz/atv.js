@@ -167,6 +167,12 @@ class AtvBasicsTest < ApplicationSystemTestCase
 
   test "adding elements" do
     visit atv_by_example_path
+
+    aCount = page.find("#aCount")
+    assert aCount.has_text? "Count 0"
+    aCount.click
+    assert aCount.has_text? "Count 1"
+    
     assert page.has_text?("Connected", count: 3)
     assert_not page.has_text?("Not yet connected")
     create_button = find(".connect-button")
@@ -180,10 +186,19 @@ class AtvBasicsTest < ApplicationSystemTestCase
     last_button.click
     assert_not page.has_text?("Not yet connected")
     assert page.has_text?("Connected", count: 6)
+
+    2.times { aCount.click }
+    assert aCount.has_text? "Count 3"
+
   end 
 
   test "removing elements" do
     visit atv_by_example_path
+
+    aCount = page.find("#aCount")
+    assert aCount.has_text? "Count 0"
+    aCount.click
+    assert aCount.has_text? "Count 1"
 
     # Disconnect
 
@@ -206,5 +221,8 @@ class AtvBasicsTest < ApplicationSystemTestCase
     input = find("#name")
     input.native.send_keys("ab5533aa")
     assert_equal "abaaabaa", input.value
+
+    aCount.click
+    assert aCount.has_text? "Count 2"
   end
 end

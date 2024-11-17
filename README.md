@@ -84,7 +84,6 @@ Right now all the features of ATV can be seen in action at [ATV By Example](http
 * Namespaced controllers (i.e. `controllers/domain/do_the_thing_atv.js`)
 
 If there's demand, the following things might get added:
-* Cleaner disconnection handling-- right now it just reloads the page if anything goes away.
 * Something closer to the 'window' events of stimulus
 * Broken out values, vs a single JSON attribute
 * Ability to modify attributes in the DOM and pick up the changes, e.g. new targets added dynamically

@@ -1,3 +1,7 @@
+## Version 0.1.4
+
+* Only remove nodes that leave the DOM, reload on BODY changes only
+
 ## Version 0.1.3
 
 * Cache dynamically loaded modules

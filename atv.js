@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.1.3";
+const version = "0.1.4";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
@@ -435,6 +435,17 @@ function activate(prefix = "atv") {
     });
   }
 
+  function removeControllers(root) {
+    const list = atvRoots.get(root);
+    if (!list) {
+      return;
+    }
+    Object.keys(list).forEach(function (controller) {
+      cleanupController(list, controller);
+    });
+    atvRoots.delete(root);
+  }
+
   function createController(root, controllerName, module) {
     let controllers = atvRoots.get(root);
 
@@ -495,8 +506,10 @@ function activate(prefix = "atv") {
       });
       import(importmapName)
         .then(function (module) {
-          createController(root, name, module);
-          modules[name] = module;
+          if (!modules[name]) {
+            modules[name] = module;
+          }
+          createController(root, name, modules[name]);
         })
         .catch(function (error) {
           console.error("Loading failed:", error);
@@ -518,14 +531,14 @@ function activate(prefix = "atv") {
 
   // Optional console output mainly for development
   const quiet = !document.querySelector(`[data-${prefix}report="true"]`);
-  function report(type, addedCount) {
-    if (quiet || addedCount < 1) {
+  function report(type, count) {
+    if (quiet || count < 1) {
       return;
     }
     console.log(
       [
         `${prefix}controllers: ${atvRoots.size} present`,
-        `${addedCount} added. (${type})`,
+        `${count} ${type}`,
         `v${version}`
       ].join(" / ")
     );
@@ -536,6 +549,8 @@ function activate(prefix = "atv") {
       return;
     }
     let atvRemoved = false;
+    let removedCount = 0;
+
     mutationList.forEach(function (mutation) {
       if (atvRemoved) {
         return;
@@ -545,26 +560,36 @@ function activate(prefix = "atv") {
           if (atvRemoved || !node.querySelector) {
             return;
           }
+          if (node.nodeName === "BODY" || node.querySelector("body")) {
+            atvRemoved = true;
+            return;
+          }
           const data = dataFor(node, `${prefix}controller`);
           if (data) {
-            atvRemoved = true;
-            return;
+            removeControllers(node);
+            removedCount += 1;
           }
-          const atv = node.querySelector(atvControllerSelector);
-          if (atv) {
-            atvRemoved = true;
-            return;
-          }
+          node
+            .querySelectorAll(atvControllerSelector)
+            .forEach(function (element) {
+              if (atvRemoved) {
+                return;
+              }
+              removeControllers(element);
+              removedCount += 1;
+            });
         });
       }
     });
 
-    // Always cleanup and restart if something is removed
+    // Always cleanup and restart if body is removed
     if (atvRemoved) {
       cleanup();
       activate(prefix);
       return;
     }
+
+    report("removed (mutation)", removedCount);
 
     // New nodes can be more safely added to an existing setup
     let addedNodes = new Set();
@@ -587,7 +612,7 @@ function activate(prefix = "atv") {
     });
 
     if (addedNodes.size > 0) {
-      report("mutation", addedNodes.size);
+      report("added (mutation)", addedNodes.size);
     }
   }
 
@@ -597,7 +622,7 @@ function activate(prefix = "atv") {
     addedCount += 1;
   });
 
-  report("activate", addedCount);
+  report("added (activation)", addedCount);
 
   activated.add(prefix);
   const config = { childList: true, subtree: true };
