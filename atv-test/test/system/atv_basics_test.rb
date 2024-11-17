@@ -165,33 +165,46 @@ class AtvBasicsTest < ApplicationSystemTestCase
     assert extra.has_text?("DONE")
   end
 
-  test "adding and removing stuff" do
+  test "adding elements" do
     visit atv_by_example_path
-    assert page.has_text?("Connected", count: 2)
+    assert page.has_text?("Connected", count: 3)
     assert_not page.has_text?("Not yet connected")
     create_button = find(".connect-button")
     create_button.click
     assert_not page.has_text?("Not yet connected")
-    assert page.has_text?("Connected", count: 3)
+    assert page.has_text?("Connected", count: 4)
     create_button.click
     assert_not page.has_text?("Not yet connected")
-    assert page.has_text?("Connected", count: 4)
+    assert page.has_text?("Connected", count: 5)
     last_button = page.all(".connect-button").last
     last_button.click
     assert_not page.has_text?("Not yet connected")
-    assert page.has_text?("Connected", count: 5)
+    assert page.has_text?("Connected", count: 6)
+  end 
+
+  test "removing elements" do
+    visit atv_by_example_path
 
     # Disconnect
 
-    disconnect_button = find("#disconnect-button")
-    assert page.has_text?("Disconnect", count: 1)
+    disconnect_button = find("#disconnect-button-2")
+    assert page.has_text?("Disconnect", count: 2)
     assert_not page.has_text?("Disconnected")
     disconnect_button.click
-    assert page.has_text?("Disconnect", count: 1)
+    assert page.has_text?("Disconnect", count: 2)
     assert page.has_text?("Disconnected")
-    assert page.has_text?("Connected", count: 4)
     input = find("#name")
     input.native.send_keys("ab5533aa")
     assert_equal "abaa", input.value
+
+    disconnect_button = find("#disconnect-button-1")
+    assert page.has_text?("Disconnect", count: 2)
+    assert page.has_text?("Disconnected", count: 1)
+    disconnect_button.click
+    assert page.has_text?("Disconnect", count: 2)
+    assert page.has_text?("Disconnected", count: 2)
+    input = find("#name")
+    input.native.send_keys("ab5533aa")
+    assert_equal "abaaabaa", input.value
   end
 end

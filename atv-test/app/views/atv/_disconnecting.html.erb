@@ -1,9 +1,24 @@
 
-<div data-atv-controller="disconnecting">
-  <button id="disconnect-button" data-atv-disconnecting-action="click">
-    Disconnect 
+<%= tag.div(data: {
+  atv_controller: "disconnecting", 
+  atv_disconnecting_values: { spanId: "disconnected-state-2" }.to_json }) do %>
+  <button id="disconnect-button-1" data-atv-disconnecting-action="click">
+    Disconnect 2
   </button>
-</div>
-<span id="disconnected-state">
-  Not yet connected.
-<span>
+<% end %>
+
+<span id="disconnected-state-2">
+  Not yet connected 2.
+</span>
+
+<%= tag.div(data: {
+  atv_controller: "disconnecting", 
+  atv_disconnecting_values: { spanId: "disconnected-state-1" }.to_json }) do %>
+  <button id="disconnect-button-2" data-atv-disconnecting-action="click">
+    Disconnect 1
+  </button>
+<% end %>
+
+<span id="disconnected-state-1">
+  Not yet connected 1.
+</span>

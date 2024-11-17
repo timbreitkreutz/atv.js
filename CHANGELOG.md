@@ -12,3 +12,11 @@
 
 * Add ability to reference multiple targets with 's' suffix, so you can reference `targets.allItem` or `targets.items`
 * Another small bugfix with multiple targets from 0.1.0 cleanup work--with new test
+
+## Version 0.1.3
+
+* Cache dynamically loaded modules
+* Found a bug with value duplication on sibling components: added test and fix
+* Export version number from main ATV module
+* reduce number of JSLint messages by renaming some modules
+

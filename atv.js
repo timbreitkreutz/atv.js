@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.1.2";
+const version = "0.1.3";
 
 // To dynamically load up the ATV javascripts
 const importMap = JSON.parse(
@@ -42,6 +42,9 @@ const importMap = JSON.parse(
 
 /* Variant in the context of ATV means either dash-case or snake_case */
 const variantPattern = /[-_]/;
+
+/* Cache of dynamically imported ATV modules */
+let modules = {};
 
 function pascalize(string) {
   return string
@@ -388,11 +391,10 @@ function activate(prefix = "atv") {
   // Assumption:
   //   all values are in a single data declaration, JSON encoded as a hash
   function findValues(root, name) {
-    let container = root.parentNode;
+    const valuePattern = `${prefix}${name}-values`;
     let values;
 
-    const valuePattern = `${prefix}${name}-values`;
-    selectVariants(container, valuePattern, function (element) {
+    function getValues(element) {
       if (values || outOfScope(element, root, name)) {
         return;
       }
@@ -400,7 +402,10 @@ function activate(prefix = "atv") {
       if (data) {
         values = JSON.parse(data);
       }
-    });
+    }
+
+    getValues(root);
+    selectVariants(root, valuePattern, getValues);
 
     return values;
   }
@@ -415,9 +420,9 @@ function activate(prefix = "atv") {
       });
     });
 
-    if (controller.disconnect) {
+    if (typeof controller.disconnect === "function") {
       controller.disconnect();
-      controller.disconnect = undefined;
+      controller.disconnect = "disconnected";
     }
   }
 
@@ -430,24 +435,24 @@ function activate(prefix = "atv") {
     });
   }
 
-  function createController(root, name, module) {
+  function createController(root, controllerName, module) {
     let controllers = atvRoots.get(root);
+
     if (!controllers) {
       controllers = {};
     }
-    if (controllers[name]) {
-      cleanupController(controllers, name);
+    if (controllers[controllerName]) {
+      cleanupController(controllers, controllerName);
     }
 
     let controller = {
       actions: {},
       handlers: {},
-      name: name,
-      root: root
+      name: controllerName
     };
 
-    controller.targets = findTargets(root, name);
-    controller.values = findValues(root, name);
+    controller.targets = findTargets(root, controllerName);
+    controller.values = findValues(root, controllerName);
     let callbacks = module.connect(
       controller.targets,
       controller.values,
@@ -457,6 +462,7 @@ function activate(prefix = "atv") {
     if (typeof callbacks === "function") {
       callbacks = callbacks();
     }
+
     Object.keys(callbacks).forEach(function (type) {
       controller.actions[type] = callbacks[type];
       if (type === "disconnect") {
@@ -464,20 +470,23 @@ function activate(prefix = "atv") {
       } else {
         controller.handlers[type] = findActions(
           root,
-          name,
+          controllerName,
           type,
           callbacks[type]
         );
       }
     });
 
-    controllers[name] = controller;
+    controllers[controllerName] = controller;
     atvRoots.set(root, controllers);
   }
 
   // Gather the context for this instance, provide it to the controller instance
   function registerController(root) {
     controllersFor(root).forEach(function (name) {
+      if (modules[name]) {
+        return createController(root, name, modules[name]);
+      }
       let importmapName = `${name}_atv`;
       Object.keys(importMap).forEach(function (source) {
         if (source.replace(/_/g, "-").includes(`/${name}-atv`)) {
@@ -487,6 +496,7 @@ function activate(prefix = "atv") {
       import(importmapName)
         .then(function (module) {
           createController(root, name, module);
+          modules[name] = module;
         })
         .catch(function (error) {
           console.error("Loading failed:", error);
@@ -594,4 +604,4 @@ function activate(prefix = "atv") {
   observer.observe(document, config);
 }
 
-export { activate };
+export { activate, version };
