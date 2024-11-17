@@ -594,4 +594,4 @@ function activate(prefix = "atv") {
   observer.observe(document, config);
 }
 
-export { activate };
+export { activate, version };
