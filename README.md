@@ -80,7 +80,8 @@ Right now all the features of ATV can be seen in action at [ATV By Example](http
 
 ## Coming Soon!
 
-I'll be continuing to add more tests and documentation.
+* I'll be continuing to add more tests and documentation.
+* Namespaced controllers (i.e. `controllers/domain/do_the_thing_atv.js`)
 
 If there's demand, the following things might get added:
 * Cleaner disconnection handling-- right now it just reloads the page if anything goes away.
