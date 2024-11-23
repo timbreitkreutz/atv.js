@@ -34,7 +34,6 @@ class VariationsTest < ApplicationSystemTestCase
       assert_equal "Count 0", button.text
       assert_equal "rgb(0, 128, 0)", button.style("background-color").values.first
       button.click
-      binding.pry
       assert_equal "Count 5", button.text
       assert_equal "rgb(0, 0, 255)", button.style("background-color").values.first
     end
