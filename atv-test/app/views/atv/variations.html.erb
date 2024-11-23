@@ -1,0 +1,9 @@
+<p>ATV v<span id="version"></span></p>
+<div data-atv-report="true" data-my-atv-report="true" data-report="true">
+  <%= render partial: "variations" %>
+</div>
+
+<script type="module">
+import { version } from "@sbrew.com/atv"
+document.getElementById("version").innerText = version;
+</script>

@@ -1,7 +1,4 @@
 #!/bin/bash
 
 cd atv-test
-bin/rails assets:clobber
-bin/rails assets:precompile
-bin/rails server
-
+while true; do bundle; bin/rails assets:clobber; bin/rails assets:precompile; bin/rails s; done

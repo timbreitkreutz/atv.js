@@ -1,0 +1,156 @@
+
+<h1>HTML style 1 - dashes, explicit json</h1>
+<div data-atv-controller="multiple">
+  Single
+  <button class="multi-button-test multi-button-1" data-atv-multiple-action="click" style="background-color: green;">
+    Count 0
+  </button>
+  Double
+  <button class="multi-button-test multi-button-2" data-atv-multiple-actions='["click", "click->clack"]' style="background-color: green;">
+    Count 0
+  </button>
+  Triple
+  <button class="multi-button-test multi-button-3" data-atv-multiple-actions='["click", "click->clack", "click->clock"]' style="background-color: green;">
+    Count 0
+  </button>
+</div>
+<h1>HTML style 2 -- underscores, quoted list</h1>
+<div data-atv_controller="multiple">
+  Single
+  <button class="multi-button-test multi-button-1" data-atv_multiple_action="click" style="background-color: green;">
+    Count 0
+  </button>
+  Double
+  <button class="multi-button-test multi-button-2" data-atv_multiple_actions='"click", "click->clack"' style="background-color: green;">
+    Count 0
+  </button>
+  Triple
+  <button class="multi-button-test multi-button-3" data-atv_multiple_actions='"click", "click->clack", "click->clock"' style="background-color: green;">
+    Count 0
+  </button>
+</div>
+<h1>HTML style 3 -- JSON injected</h1>
+<div data-atv-controller="multiple">
+  Single
+  <button class="multi-button-test multi-button-1" data-atv_multiple_action="click" style="background-color: green;">
+    Count 0
+  </button>
+  Double
+  <button class="multi-button-test multi-button-2" data-atv_multiple_actions='<%= ["click", "click->clack"].to_json %>' style="background-color: green;">
+    Count 0
+  </button>
+  Triple
+  <button class="multi-button-test multi-button-3" data-atv-multiple-actions='<%= ["click", "click->clack", "click->clock"].to_json %>' style="background-color: green;">
+    Count 0
+  </button>
+</div>
+<h1>HTML style 4 -- underscore, sequence style</h1>
+<div data-atv_controller="multiple">
+  Single
+  <button class="multi-button-test multi-button-1" data-atv_actions="click->multiple#click" style="background-color: green;">
+    Count 0
+  </button>
+  Double
+  <button class="multi-button-test multi-button-2" data-atv_actions='<%= ["click->multiple#click", "click->multiple#clack"].to_json %>' style="background-color: green;">
+    Count 0
+  </button>
+  Triple
+  <button class="multi-button-test multi-button-3" data-atv_actions='<%= ["click->multiple#clack", "click->multiple#click", "click->multiple#clock"].to_json %>' style="background-color: green;">
+    Count 0
+  </button>
+</div>
+<h1>HTML style 5 -- dash, sequence style -- not json, no brackets</h1>
+<div data-atv-controller="multiple">
+  Single
+  <button class="multi-button-test multi-button-1" data-atv-actions="click->multiple#click" style="background-color: green;">
+    Count 0
+  </button>
+  Double
+  <button class="multi-button-test multi-button-2" data-atv-actions='"click->multiple#click", "click->multiple#clack"' style="background-color: green;">
+    Count 0
+  </button>
+  Triple
+  <button class="multi-button-test multi-button-3" data-atv-actions='"click->multiple#clack", "click->multiple#click", "click->multiple#clock"' style="background-color: green;">
+    Count 0
+  </button>
+</div>
+<h1>HTML style 6 -- dash, sequence style -- not json, no brackets, no quotes</h1>
+<div data-atv-controller="multiple">
+  Single
+  <button class="multi-button-test multi-button-1" data-atv-actions="click->multiple#click" style="background-color: green;">
+    Count 0
+  </button>
+  Double
+  <button class="multi-button-test multi-button-2" data-atv-actions='click->multiple#click, click->multiple#clack' style="background-color: green;">
+    Count 0
+  </button>
+  Triple
+  <button class="multi-button-test multi-button-3" data-atv-actions='click->multiple#clack, click->multiple#click, click->multiple#clock' style="background-color: green;">
+    Count 0
+  </button>
+</div>
+<h1>Rails style 1 - underscores</h1>
+<%= tag.div data: { atv_controller: "multiple" } do %>
+  Single
+    <%= tag.button class: "multi-button-test multi-button-1", style:"background-color: green;", data: {
+      atv_multiple_action: "click"
+  } do %>
+    Count 0
+  <% end %>
+  Double
+  <%= tag.button class: "multi-button-test multi-button-2", style:"background-color: green;", data: {
+      atv_multiple_actions: '["click", "click->clack"]'
+    } do %>
+    Count 0
+  <% end %>
+  Triple
+  <%= tag.button class: "multi-button-test multi-button-3", style:"background-color: green;", data: {
+      atv_multiple_actions: '["click", "click->clack", "click->clock"]'
+    } do %> 
+    Count 0
+  <% end %>
+<% end %>
+<h1>Rails style 2 -- dashes</h1>
+<%= tag.div data: { "atv-controller": "multiple" } do %>
+  Single
+    <%= tag.button class: "multi-button-test multi-button-1", style:"background-color: green;", data: {
+      "atv-multiple-action": "click"
+  } do %>
+    Count 0
+  <% end %>
+  Double
+  <%= tag.button class: "multi-button-test multi-button-2", style:"background-color: green;", data: {
+      "atv-multiple-actions": ["click", "click->clack"].to_json
+    } do %>
+    Count 0
+  <% end %>
+  Triple
+  <%= tag.button class: "multi-button-test multi-button-3", style:"background-color: green;", data: {
+      "atv-multiple-actions": ["click", "click->clack", "click->clock"].to_json
+    } do %> 
+    Count 0
+  <% end %>
+<% end %>
+<h1>Rails style 3 -- underscore, sequence</h1>
+<%= tag.div data: { atv_controller: "multiple" } do %>
+  Single
+    <%= tag.button class: "multi-button-test multi-button-1", style:"background-color: green;", data: {
+      atv_action: "click->multiple#click"
+  } do %>
+    Count 0
+  <% end %>
+  Double
+  <%= tag.button class: "multi-button-test multi-button-2", style:"background-color: green;", data: {
+    atv_actions: ["click->multiple#clack", "click->multiple#click"].to_json
+    } do %>
+    Count 0
+  <% end %>
+  Triple
+  <%= tag.button class: "multi-button-test multi-button-3", style:"background-color: green;", data: {
+    atv_actions: ["click->multiple#clock", "click->multiple", "click->multiple#clack"].to_json
+    } do %> 
+    Count 0
+  <% end %>
+<% end %>
+
+<div data-atv-multiple-target="clock">0</div>

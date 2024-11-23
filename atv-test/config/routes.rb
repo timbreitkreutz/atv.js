@@ -12,6 +12,7 @@ Rails.application.routes.draw do
 
   get "atv" => "atv#index"
   get "atv_by_example" => "atv#by_example"
+  get "atv_variations" => "atv#variations"
 
 
   # Defines the root path route ("/")
