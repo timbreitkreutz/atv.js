@@ -31,7 +31,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.1.5";
+const version = "0.1.6";
 
 // To dynamically load up the ATV javascripts if needed
 function importMap() {
@@ -273,7 +273,7 @@ function activate(prefix = "atv") {
   if (allControllers.has(prefix)) {
     return;
   }
-  allControllers.set(prefix, new Map);
+  allControllers.set(prefix, new Map());
   const root = document.body;
   // Provide selector for any controllers given a prefix
   const controllersSelector = Array.from(
@@ -475,7 +475,7 @@ function activate(prefix = "atv") {
 
   function registerControllers(root) {
     if (!allControllers.get(prefix)) {
-      allControllers.set(prefix, new Map);
+      allControllers.set(prefix, new Map());
     }
     if (!allControllers.get(prefix).has(root)) {
       allControllers.get(prefix).set(root, new Map());
@@ -515,7 +515,7 @@ function activate(prefix = "atv") {
 
   function findControllers(root) {
     if (!allControllers.get(prefix)) {
-      allControllers.set(prefix, new Map);
+      allControllers.set(prefix, new Map());
     }
     let initialCount = Number(allControllers.get(prefix)?.size);
     const elements = new Set();

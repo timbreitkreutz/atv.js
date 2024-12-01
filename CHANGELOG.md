@@ -1,3 +1,7 @@
+## Version 0.1.6
+
+* Fixed a small error message on Turbo reloads
+
 ## Version 0.1.5
 
 * Major refactor-- new tests added, all previous tests still pass
