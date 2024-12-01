@@ -4,26 +4,21 @@
   <button id="mCount" data-my-atv-simple-action="click">
     Count 0
   </button>
+  <span data-my-atv-simple-target="blah">WAS1</span>
 </div>
-
-<script type="module">
-  import { activate } from '@sbrew.com/atv';
-
-  activate("my-atv");
-</script>
-
-
 
 <div data-controller="simple">
   N
   <button id="nCount" data-simple-action="click">
     Count 0
   </button>
+  <span data-simple-target="blah">WAS2</span>
 </div>
 
 <script type="module">
   import { activate } from '@sbrew.com/atv';
 
   activate("");
+  activate("my-atv");
 </script>
 

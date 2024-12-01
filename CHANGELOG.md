@@ -1,3 +1,8 @@
+## Version 0.1.5
+
+* Major refactor-- new tests added, all previous tests still pass
+* No functionality changes.
+
 ## Version 0.1.4
 
 * Only remove nodes that leave the DOM, reload on BODY changes only

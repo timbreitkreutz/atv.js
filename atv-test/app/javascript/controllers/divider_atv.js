@@ -6,8 +6,9 @@ function connect(targets) {
         targets.quotient.innerText = "You can't divide by zero!";
         return false;
       }
-      return targets.quotient.innerText = 
-        Number(targets.dividend.value) / Number(targets.divisor.value);
+      const result = Number(targets.dividend.value) / Number(targets.divisor.value);
+      targets.quotient.innerText = result;
+      return result !== 0;
     }
   };
 }

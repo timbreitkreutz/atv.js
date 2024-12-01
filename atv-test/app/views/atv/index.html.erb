@@ -1,4 +1,14 @@
 <ul>
 <li><%= link_to "Basics", atv_by_example_path %></li>
 <li><%= link_to "Variations", atv_variations_path %></li>
+<li><%= link_to "Unit Test", unit_test_path %></li>
 </ul>
+
+<div id='simple' data-atv-controller="simple" data-atv-simple-values='"this": "that", "one": "two"' }'>
+  <div data-atv-simple-action="click">CLICKER1</div>
+  <div data-atv-simple-actions="clack, click">FOCUS2</div>
+  <div data-atv-action="click->simple#clack">CLICKER3</div>
+  <div data-atv-simple-target="here"></div>
+  <div data-atv-simple-target="there"></div>
+  <div data-atv-simple-target="everywhere"></div>
+</div>

@@ -1,5 +1,5 @@
 /*global
-  console, document, MutationObserver
+  console, document, MutationObserver, HTMLElement
 */
 
 //
@@ -31,20 +31,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.1.4";
+const version = "0.1.5";
 
-// To dynamically load up the ATV javascripts
-const importMap = JSON.parse(
-  document.querySelector("script[type='importmap']").innerText
-).imports;
-
-/* --- General functions, not tied to a specific activation --- */
+// To dynamically load up the ATV javascripts if needed
+function importMap() {
+  return JSON.parse(
+    document.querySelector("script[type='importmap']").innerText
+  ).imports;
+}
 
 /* Variant in the context of ATV means either dash-case or snake_case */
 const variantPattern = /[-_]/;
-
-/* Cache of dynamically imported ATV modules */
-let modules = {};
 
 function pascalize(string) {
   return string
@@ -53,309 +50,258 @@ function pascalize(string) {
     .join("");
 }
 
-function camelize(string) {
-  const pascalized = pascalize(string.toLowerCase());
-  return pascalized.charAt(0).toLowerCase() + pascalized.slice(1);
+function dasherize(string) {
+  return string.replace(/_/g, "-");
 }
 
 const deCommaPattern = /,[\s+]/;
 
-function jsonParseArray(string) {
-  if (/^[[{]/.test(string)) {
-    return JSON.parse(string);
-  }
-  return string.split(deCommaPattern).map((str) => str.trim());
-}
-
-/* Takes a string, invokes callback for each variation of
- * underscores and dashes */
-function allVariants(name, callback, prefix = null) {
-  const words = name.split(variantPattern);
-  if (words.length < 2) {
-    if (prefix) {
-      callback(`${prefix}-${name}`);
-      callback(`${prefix}_${name}`);
-    } else {
-      callback(name);
-    }
-    return;
-  }
-  const remainder = words.slice(1).join("-");
-  if (prefix) {
-    allVariants(remainder, callback, `${prefix}-${words[0]}`);
-    allVariants(remainder, callback, `${prefix}_${words[0]}`);
-  } else {
-    allVariants(remainder, callback, `${words[0]}`);
-  }
-}
-
-/* Invokes callback for each element found with the
- * data attribute set */
-function selectVariants(container, dataAttribute, callback) {
-  allVariants(`data-${dataAttribute}`, function (variant) {
-    container.querySelectorAll(`[${variant}]`).forEach(function (element) {
-      let dataAttributeName = variant.replace(/^data-/, "");
-      if (!element.dataset[dataAttributeName]) {
-        dataAttributeName = camelize(dataAttributeName);
-      }
-      callback(element, dataAttributeName, variant);
-    });
-  });
-}
-
-/* Parses actions in the data attributes:
- * "requestedEvent->controller#actionName(args)" =>
- *      requestedEvent, actionName, controller, args
- * "click" => click, click, null, null
+/* The following methods take variable arguments (no ... for now
+ * for backward compatibility) and return combinations of the list
+ * connected with dashes and underscores.  For many examples see
+ * test/system/unit_test.rb
  */
-let parseActions = function (dataAttribute) {
-  const definitions = jsonParseArray(dataAttribute);
-  return definitions.map(function (definition) {
-    let [requestedEvent, fullAction] = definition.split(/[-=]>/);
-    if (!fullAction) {
-      fullAction = requestedEvent;
-      requestedEvent = requestedEvent.split(/[#(),]/)[0];
-    }
-    let [controller, innerAction] = fullAction.split("#");
-    if (!innerAction) {
-      innerAction = controller;
-      controller = undefined;
-    }
-    let [actionName, args] = innerAction.split(/[()]/);
-    if (!actionName) {
-      actionName = requestedEvent;
-    }
-    if (args) {
-      args = args.split(deCommaPattern);
-    }
-    return [requestedEvent, actionName, controller, args];
-  });
-};
-
-/* Extracts the value of the given data attribute from the element */
-function dataFor(element, name) {
-  if (!element?.dataset) {
-    return;
+function allVariants() {
+  const words = Array.from(arguments).filter((arg) => Boolean(arg));
+  if (words.length === 0) {
+    return [];
   }
-  let result = element.getAttribute(`data-${name}`);
-  if (!result) {
-    allVariants(name, function (variant) {
-      if (!result) {
-        result = element.dataset[variant];
-      }
-    });
-  }
-  return result;
+  const variants = dashVariants.apply(null, words);
+  return variants.flatMap((string) => [string, `${string}s`]);
 }
 
-/* Keep track of which namespaces have been activated already */
-let activated = new Set();
+function dashVariants() {
+  function dashAndUnderscores(input) {
+    const string = input || "";
+    if (variantPattern.test(`${string}`)) {
+      return [dasherize(string), string.replace(/-/g, "_")];
+    }
+    return [string];
+  }
+  const words = Array.from(arguments);
+  const first = dashAndUnderscores(words[0]);
+  if (words.length < 2) {
+    return first;
+  }
+  return dashVariants.apply(null, words.slice(1)).flatMap(function (str2) {
+    return first.flatMap(function (str1) {
+      return [`${str1}-${str2}`, `${str1}_${str2}`];
+    });
+  });
+}
+
+/* Returns a list of selectors to use for given name list */
+function variantSelectors() {
+  const results = [];
+  const container = arguments[0];
+  const words = ["data"].concat(
+    Array.from(arguments)
+      .slice(1)
+      .filter((str) => Boolean(str))
+  );
+  const variants = allVariants.apply(null, words);
+  variants.forEach(function (variant) {
+    container.querySelectorAll(`[${variant}]`).forEach(function (element) {
+      results.push([element, variant]);
+    });
+  });
+  return results;
+}
+
+/* JSON is parsed aggressively and relies on "try" */
+function errorReport(ex) {
+  if (ex?.message?.includes("JSON Parse error:")) {
+    return;
+  }
+  console.error(`ATV: ${ex}`);
+}
+
+/*
+ * Gets all action declarations for an element, returns an array of structures.
+ */
+function actionsFor(prefix, element, onlyEvent = null) {
+  let actions = [];
+
+  // Parse a single action part, controller is passed in
+  // if derived from the attribute key
+  function parseAction(action, controller) {
+    let method;
+    let parameters = [];
+    let [event, call] = action.split(/[\s]*[-=]>[\s]*/);
+
+    if (call) {
+      let [innerController, methodCall] = call.split("#");
+      if (methodCall) {
+        controller = innerController;
+      } else {
+        methodCall = innerController;
+      }
+      method = methodCall;
+    } else {
+      method = event;
+    }
+    const [methodName, params] = method.split(/[()]/);
+    if (params) {
+      method = methodName;
+      parameters = params.split(deCommaPattern);
+      try {
+        parameters = JSON.parse(`[${params}]`);
+      } catch (ex) {
+        errorReport(ex);
+      }
+      event = event.split("(")[0];
+    }
+    if (onlyEvent && event !== onlyEvent) {
+      return;
+    }
+    if (!controller) {
+      controller = method;
+      method = event;
+    }
+    actions.push({
+      controller: dasherize(controller),
+      event,
+      method,
+      parameters
+    });
+  }
+
+  // Split on commas as long as they are not inside parameter lists.
+  function actionSplit(string, callback) {
+    let paramDepth = 0;
+    let accumulator = [];
+    Array.from(string).forEach(function (char) {
+      if (char === "," && paramDepth === 0) {
+        callback(accumulator.join("").trim());
+        accumulator = [];
+        return;
+      }
+      accumulator.push(char);
+      if (char === "(") {
+        paramDepth += 1;
+      } else if (char === ")") {
+        paramDepth -= 1;
+      }
+    });
+    const last = accumulator.join("").trim();
+    if (paramDepth !== 0) {
+      console.error(`badly formed parameters: ${string}`);
+    }
+    if (last) {
+      callback(last);
+    }
+  }
+
+  element.getAttributeNames().forEach(function (name) {
+    const unqualified = new RegExp(`^data[_-]${prefix}[_-]?action[s]?`);
+    const qualified = new RegExp(
+      `^data[_-]${prefix}[_-]?(.*[^-_])[_-]?action[s]?`
+    );
+
+    let controller;
+
+    let matched = name.match(qualified);
+    if (matched) {
+      controller = matched[1];
+    } else {
+      controller = null;
+      matched = name.match(unqualified);
+    }
+    if (!matched) {
+      return;
+    }
+    let list = element.getAttribute(name);
+    if (list) {
+      try {
+        list = JSON.parse(list).join(",");
+      } catch (ex) {
+        errorReport(ex);
+      }
+      actionSplit(list, (action) => parseAction(action, controller));
+    }
+  });
+  return actions;
+}
+
+let allControllers = new Map();
+let allEventListeners = new Map();
+
+// Returns a list of attributes for the type (controller, target, action, etc.)
+function attributesFor(element, type) {
+  if (!element || !element.getAttributeNames) {
+    return [];
+  }
+  const regex = new RegExp(`${type}s?$`, "i");
+  let list = [];
+  element.getAttributeNames().forEach(function (attribute) {
+    if (regex.test(attribute)) {
+      list.push(element.getAttribute(attribute));
+    }
+  });
+  return list;
+}
+
+/* Cache of dynamically imported ATV modules */
+let modules = new Set();
+
+/* Look for the controllers in the importmap or just try to load them */
+function withModule(name, callback) {
+  let importmapName = `${name}_atv`;
+  const map = importMap();
+  Object.keys(map).forEach(function (source) {
+    if (dasherize(source).includes(`/${name}-atv`)) {
+      importmapName = map[source]; // There should only be one
+    }
+  });
+  if (modules.has(importmapName)) {
+    callback(modules[importmapName]);
+  }
+  import(importmapName)
+    .then(function (module) {
+      if (!modules.has(importmapName)) {
+        modules[importmapName] = module;
+      }
+      callback(modules[importmapName]);
+    })
+    .catch(function (ex) {
+      console.error(`Loading ${importmapName} failed:`, ex);
+    });
+}
 
 /* --- Main activation function --- */
 function activate(prefix = "atv") {
-  const observer = new MutationObserver(domWatcher);
-  if (prefix && !/-$/.test(prefix)) {
-    prefix = `${prefix}-`;
-  }
-  if (activated.has(prefix)) {
+  if (allControllers.has(prefix)) {
     return;
   }
-
-  let atvRoots = new Map(); // contains all the ATV controller state
-
-  // Find any names of controllers attached to given element
-  function controllersFor(element) {
-    const list = dataFor(element, `${prefix}controller`);
-    if (list) {
-      return list.replace(/_/g, "-").split(deCommaPattern);
-    } else {
-      return [];
-    }
-  }
-
-  // Calculate selector for all controlers
-  let selectors = [];
-  allVariants(`data-${prefix}controller`, function (variant) {
-    selectors.push(`[${variant}]`);
-  });
-  const atvControllerSelector = selectors.join(",");
+  allControllers.set(prefix, new Map());
+  const root = document.body;
+  // Provide selector for any controllers given a prefix
+  const controllersSelector = Array.from(
+    allVariants("data", prefix, "controller")
+  )
+    .map((selector) => `[${selector}]`)
+    .join(",");
 
   // To allow for nesting controllers:
   // skip if it's not the nearest enclosing controller
   function outOfScope(element, root, name) {
-    // There should only be one of these.
-    // Behavior undefined if it finds more than one variant.
-    const closestRoot = element.closest(atvControllerSelector);
+    if (!element || element.nodeType === "BODY") {
+      return true;
+    }
+    const closestRoot = element.closest(controllersSelector);
+    if (!closestRoot) {
+      return true;
+    }
     let out = false;
-    controllersFor(closestRoot).forEach(function (controller) {
-      if (controller === name) {
+    attributesFor(closestRoot, "controller").forEach(function (attr) {
+      const list = attr.split(deCommaPattern).map((str) => dasherize(str));
+      if (list.includes(name)) {
         out = !(closestRoot === root);
+      } else {
+        out = outOfScope(closestRoot.parentNode, root, name);
       }
     });
     return out;
-  }
-
-  // Find the nearest named controller for an element
-  function controllerFor(element, name) {
-    const closestRoot = element.closest(atvControllerSelector);
-    if (!closestRoot) {
-      return undefined;
-    }
-    let foundRoot;
-    controllersFor(closestRoot).forEach(function (controller) {
-      if (foundRoot) {
-        return;
-      }
-      if (controller === name) {
-        foundRoot = closestRoot;
-        return;
-      }
-    });
-    if (foundRoot) {
-      return foundRoot;
-    }
-    return controllerFor(closestRoot.parentNode, name);
-  }
-
-  let sequences = new Set();
-
-  // Find all declared actions for an ATV controller and add listeners
-  function findActions(root, name, actionName, handler) {
-    let actionHandlers = [];
-    function registerAction(element, definitions) {
-      parseActions(definitions).forEach(function (definition) {
-        const [requestedEvent, definedActionName, controller, args] =
-          definition;
-        if (controller && controller !== name) {
-          return;
-        }
-        if (actionName !== definedActionName) {
-          return;
-        }
-        if (outOfScope(element, root, name)) {
-          return;
-        }
-        const callback = function (event) {
-          return handler(event.target, event, args);
-        };
-        actionHandlers.push([element, requestedEvent, callback]);
-        element.addEventListener(requestedEvent, callback);
-      });
-    }
-
-    // First ATV-style, with the controller name in the attribute name, singular
-    selectVariants(
-      root,
-      `${prefix}${name}-action`,
-      function (element, dataAttributeName) {
-        const definitions = `["${element.dataset[dataAttributeName]}"]`;
-        if (definitions) {
-          registerAction(element, definitions);
-        } else {
-          console.error(`Malformed action: ${name}/${dataAttributeName}`);
-        }
-      }
-    );
-
-    // Next ATV-style, with the controller name in the attribute name, multiple
-    selectVariants(
-      root,
-      `${prefix}${name}-actions`,
-      function (element, dataAttributeName) {
-        const definitions = element.dataset[dataAttributeName];
-        if (definitions) {
-          registerAction(element, definitions);
-        } else {
-          console.error(`Malformed actions: ${name}/${dataAttributeName}`);
-        }
-      }
-    );
-
-    // Stimulus-style action definition (including sequences)
-    function buildSequence(element, dataAttributeName) {
-      const actionList = element.dataset[dataAttributeName];
-
-      // Invoke dynamically each time, this checks the return value to
-      // decide each time whether to continue.
-      function invokeNext(sequence, forEvent) {
-        // Inner function is an event handler and will be hooked into the DOM
-        return function (event) {
-          // We are done if the sequence list is used up.
-          const definition = sequence[0];
-          if (!definition) {
-            return false;
-          }
-
-          // Don't execute if it's for a different action
-          const [requestedEvent, action, controller, args] = definition;
-          const remainder = sequence.slice(1);
-          if (!controller || requestedEvent !== forEvent) {
-            return invokeNext(remainder, forEvent)(event);
-          }
-
-          // Skip if this isn't connecting to the "in scope" controller
-          const atvControllerElement = controllerFor(event.target, controller);
-          if (!atvControllerElement) {
-            return invokeNext(remainder, forEvent)(event);
-          }
-
-          // Actually run it here
-          const actions =
-            atvRoots.get(atvControllerElement)[controller]?.actions;
-          if (actions) {
-            const func = actions[action];
-            if (func) {
-              const result = func(event.target, event, args);
-              if (result) {
-                return invokeNext(remainder, forEvent)(event);
-              }
-              return false;
-            }
-          }
-
-          // Finally send it along if there were no actions there.
-          return invokeNext(remainder, forEvent)(event);
-        };
-      }
-
-      if (!actionList) {
-        return;
-      }
-      const sequence = parseActions(actionList);
-      const eventList = new Set();
-      sequence.forEach(function (definition) {
-        eventList.add(definition[0]);
-      });
-      eventList.forEach(function (forEvent) {
-        let found = false;
-        sequence.forEach(function (definition) {
-          const [requestedEvent] = definition;
-          if (forEvent !== requestedEvent) {
-            return;
-          }
-          found = true;
-        });
-        if (found) {
-          const callback = invokeNext(sequence, forEvent);
-          actionHandlers.push([element, forEvent, callback]);
-          element.addEventListener(forEvent, callback);
-        }
-      });
-    }
-    ["", "s"].forEach(function (plural) {
-      selectVariants(
-        root,
-        `${prefix}action${plural}`,
-        function (element, dataAttributeName) {
-          if (sequences.has(element)) {
-            return;
-          }
-          sequences.add(element);
-          buildSequence(element, dataAttributeName);
-        }
-      );
-    });
-    return actionHandlers;
   }
 
   // Find all declared targets for this ATV and provide them to the ATV instance
@@ -363,268 +309,293 @@ function activate(prefix = "atv") {
     const container = root.parentNode;
     let targets = {};
 
-    selectVariants(container, `${prefix}${name}-target`, function (element) {
-      if (outOfScope(element, root, name)) {
-        return;
-      }
-      const targetPattern = `${prefix}${name}-target`;
-      const key = dataFor(element, targetPattern);
-      const allKey = `all${pascalize(key)}`;
-      const pluralKey = `${key}s`;
+    variantSelectors(container, prefix, name, "target").forEach(
+      function (item) {
+        const [element, variant] = item;
+        if (outOfScope(element, root, name)) {
+          return;
+        }
+        const key = element.getAttribute(variant);
 
-      if (targets[allKey]) {
-        targets[allKey].push(element);
-        targets[pluralKey].push(element);
-      } else if (targets[key]) {
-        targets[allKey] = [targets[key], element];
-        targets[pluralKey] = [targets[key], element];
-        delete targets[key];
-      } else {
-        targets[key] = element;
+        const allKey = `all${pascalize(key)}`;
+        const pluralKey = `${key}s`;
+
+        if (targets[allKey]) {
+          targets[allKey].push(element);
+          targets[pluralKey].push(element);
+        } else if (targets[key]) {
+          targets[allKey] = [targets[key], element];
+          targets[pluralKey] = [targets[key], element];
+          delete targets[key];
+        } else {
+          targets[key] = element;
+        }
       }
-    });
+    );
 
     return targets;
   }
 
   // Find the values data element and provide it to the ATV instance
-  // Assumption:
-  //   all values are in a single data declaration, JSON encoded as a hash
-  function findValues(root, name) {
-    const valuePattern = `${prefix}${name}-values`;
-    let values;
-
-    function getValues(element) {
-      if (values || outOfScope(element, root, name)) {
-        return;
+  function findValues(element, name) {
+    let values = {};
+    Array.from(allVariants("data", prefix, name, "value")).forEach(
+      function (variant) {
+        const data = element.getAttribute(variant);
+        if (data) {
+          try {
+            Object.assign(values, JSON.parse(data));
+          } catch (ex) {
+            try {
+              Object.assign(values, JSON.parse(`{${data}}`));
+            } catch (ex2) {
+              errorReport(ex2);
+            }
+            errorReport(ex);
+          }
+        }
       }
-      const data = dataFor(element, valuePattern);
-      if (data) {
-        values = JSON.parse(data);
-      }
-    }
-
-    getValues(root);
-    selectVariants(root, valuePattern, getValues);
-
+    );
     return values;
   }
 
-  function cleanupController(controllers, name) {
-    const controller = controllers[name];
-    const handlers = controller.handlers;
-    Object.keys(handlers).forEach(function (key) {
-      const entries = handlers[key];
-      entries.forEach(function (entry) {
-        entry[0].removeEventListener(entry[1], entry[2]);
-      });
-    });
+  /** Controller factory */
+  function createController(root, name) {
+    let actions;
+    let targets;
+    let values;
 
-    if (typeof controller.disconnect === "function") {
-      controller.disconnect();
-      controller.disconnect = "disconnected";
+    function getActions() {
+      return actions;
     }
-  }
 
-  function findControllers(selector, type, callback) {
-    document.querySelectorAll(selector).forEach(function (element) {
-      const root = atvRoots.get(element);
-      if (root && root[type]) {
-        callback(root[type]);
+    function registerActions(root, name) {
+      const controllers = allControllers.get(prefix).get(root);
+
+      let elements = new Set();
+      function collectElements(item) {
+        const [element] = item;
+        elements.add(element);
       }
-    });
-  }
+      variantSelectors(root, prefix, name, "action").forEach(collectElements);
+      variantSelectors(root, prefix, "action").forEach(collectElements);
 
-  function removeControllers(root) {
-    const list = atvRoots.get(root);
-    if (!list) {
-      return;
-    }
-    Object.keys(list).forEach(function (controller) {
-      cleanupController(list, controller);
-    });
-    atvRoots.delete(root);
-  }
-
-  function createController(root, controllerName, module) {
-    let controllers = atvRoots.get(root);
-
-    if (!controllers) {
-      controllers = {};
-    }
-    if (controllers[controllerName]) {
-      cleanupController(controllers, controllerName);
-    }
-
-    let controller = {
-      actions: {},
-      handlers: {},
-      name: controllerName
-    };
-
-    controller.targets = findTargets(root, controllerName);
-    controller.values = findValues(root, controllerName);
-    let callbacks = module.connect(
-      controller.targets,
-      controller.values,
-      root,
-      findControllers
-    );
-    if (typeof callbacks === "function") {
-      callbacks = callbacks();
-    }
-
-    Object.keys(callbacks).forEach(function (type) {
-      controller.actions[type] = callbacks[type];
-      if (type === "disconnect") {
-        controller.disconnect = callbacks[type];
-      } else {
-        controller.handlers[type] = findActions(
-          root,
-          controllerName,
-          type,
-          callbacks[type]
-        );
-      }
-    });
-
-    controllers[controllerName] = controller;
-    atvRoots.set(root, controllers);
-  }
-
-  // Gather the context for this instance, provide it to the controller instance
-  function registerController(root) {
-    controllersFor(root).forEach(function (name) {
-      if (modules[name]) {
-        return createController(root, name, modules[name]);
-      }
-      let importmapName = `${name}_atv`;
-      Object.keys(importMap).forEach(function (source) {
-        if (source.replace(/_/g, "-").includes(`/${name}-atv`)) {
-          importmapName = importMap[source];
-        }
-      });
-      import(importmapName)
-        .then(function (module) {
-          if (!modules[name]) {
-            modules[name] = module;
+      // Find each element that has this type of controller
+      Array.from(elements).forEach(function (element) {
+        // Get action definitions
+        const list = actionsFor(prefix, element);
+        // Collect the events
+        let events = new Set();
+        // Build the list of distinct events
+        list.forEach((action) => events.add(action.event));
+        // Make one handler for each event type
+        events.forEach(function (eventName) {
+          const firstForEvent = list.find(
+            (action) => action.event === eventName
+          );
+          if (firstForEvent?.controller !== name) {
+            return;
           }
-          createController(root, name, modules[name]);
-        })
-        .catch(function (error) {
-          console.error("Loading failed:", error);
+
+          function invokeNext(event, actions) {
+            if (actions.length < 1) {
+              return;
+            }
+            const action = actions[0];
+            if (
+              action.event === eventName &&
+              !outOfScope(element, root, action.controller)
+            ) {
+              const callbacks = controllers.get(action.controller).getActions();
+              const callback = callbacks[action.method];
+              if (callback) {
+                const result = callback(event.target, event, action.parameters);
+                if (result === false) {
+                  return;
+                }
+              }
+            }
+            return invokeNext(event, actions.slice(1));
+          }
+
+          const handler = (event) => invokeNext(event, list);
+          function cleanup() {
+            element.removeEventListener(eventName, handler);
+          }
+          const signature = {
+            cleanup,
+            element,
+            eventName,
+            handler,
+            name,
+            prefix
+          };
+          let elementActions = allEventListeners.get(element);
+
+          if (!elementActions) {
+            elementActions = [signature];
+          } else {
+            elementActions.push(signature);
+          }
+          allEventListeners.set(element, elementActions);
+          element.addEventListener(eventName, handler);
         });
+      });
+    }
+
+    /** Call this to populate a new controller */
+    function refresh() {
+      return withModule(name, function (module) {
+        targets = findTargets(root, name);
+        values = findValues(root, name);
+        const invoked = module.connect(
+          targets,
+          values,
+          root,
+          controllerBySelectorAndName
+        );
+        // Allow for returning an collection of actions or
+        // a function returning a collection of actions
+        if (typeof invoked === "function") {
+          actions = invoked();
+        } else {
+          actions = invoked;
+        }
+        registerActions(root, name);
+      });
+    }
+
+    /** The public controller object */
+    const controller = Object.freeze({
+      getActions,
+      refresh
     });
+    return controller;
   }
 
-  // Cleans up all state for given prefix
-  function cleanup() {
-    observer.disconnect();
-    atvRoots.forEach(function (controllers) {
-      Object.keys(controllers).forEach(function (name) {
-        cleanupController(controllers, name);
+  function registerControllers(root) {
+    if (!allControllers.get(prefix).has(root)) {
+      allControllers.get(prefix).set(root, new Map());
+    }
+
+    attributesFor(root, "controller").forEach(function (attribute) {
+      attribute.split(deCommaPattern).forEach(function (controllerName) {
+        const name = dasherize(controllerName);
+        const controller =
+          allControllers.get(prefix).get(root).get(name) ||
+          createController(root, name);
+        controller.refresh();
+        allControllers.get(prefix).get(root).set(name, controller);
       });
     });
-    atvRoots = new Map();
-    activated.delete(prefix);
   }
 
   // Optional console output mainly for development
-  const quiet = !document.querySelector(`[data-${prefix}report="true"]`);
-  function report(type, count) {
+  const quiet = !document.querySelector(`[data-${prefix}-report="true"]`);
+  function report(count, type, action) {
     if (quiet || count < 1) {
       return;
     }
     console.log(
       [
-        `${prefix}controllers: ${atvRoots.size} present`,
-        `${count} ${type}`,
+        [
+          "ATV:",
+          `(${prefix})`,
+          type,
+          `[${Number(allControllers.get(prefix)?.size)}]`
+        ].join(" "),
+        `${action}: ${count}`,
         `v${version}`
       ].join(" / ")
     );
   }
 
-  function domWatcher(mutationList) {
-    if (!activated.has(prefix)) {
-      return;
+  function findControllers(root) {
+    let initialCount = Number(allControllers.get(prefix)?.size);
+    const elements = new Set();
+    if (root.matches(controllersSelector)) {
+      elements.add(root);
     }
-    let atvRemoved = false;
-    let removedCount = 0;
+    root
+      .querySelectorAll(controllersSelector)
+      .forEach((element) => elements.add(element));
+    elements.forEach(registerControllers);
 
-    mutationList.forEach(function (mutation) {
-      if (atvRemoved) {
-        return;
-      }
-      if (mutation.type === "childList") {
-        mutation.removedNodes.forEach(function (node) {
-          if (atvRemoved || !node.querySelector) {
-            return;
-          }
-          if (node.nodeName === "BODY" || node.querySelector("body")) {
-            atvRemoved = true;
-            return;
-          }
-          const data = dataFor(node, `${prefix}controller`);
-          if (data) {
-            removeControllers(node);
-            removedCount += 1;
-          }
-          node
-            .querySelectorAll(atvControllerSelector)
-            .forEach(function (element) {
-              if (atvRemoved) {
-                return;
-              }
-              removeControllers(element);
-              removedCount += 1;
-            });
-        });
-      }
-    });
-
-    // Always cleanup and restart if body is removed
-    if (atvRemoved) {
-      cleanup();
-      activate(prefix);
-      return;
-    }
-
-    report("removed (mutation)", removedCount);
-
-    // New nodes can be more safely added to an existing setup
-    let addedNodes = new Set();
-    mutationList.forEach(function (mutation) {
-      if (mutation.type === "childList") {
-        mutation.addedNodes.forEach(function (node) {
-          if (!node.parentNode?.querySelector) {
-            return;
-          }
-          node.parentNode
-            .querySelectorAll(atvControllerSelector)
-            .forEach(function (controller) {
-              if (!addedNodes.has(controller) && !atvRoots.has(controller)) {
-                registerController(controller);
-                addedNodes.add(controller);
-              }
-            });
-        });
-      }
-    });
-
-    if (addedNodes.size > 0) {
-      report("added (mutation)", addedNodes.size);
-    }
+    report(
+      allControllers.get(prefix).size - initialCount,
+      "controllers",
+      "found"
+    );
   }
 
-  let addedCount = 0;
-  document.querySelectorAll(atvControllerSelector).forEach(function (root) {
-    registerController(root);
-    addedCount += 1;
-  });
+  findControllers(root);
 
-  report("added (activation)", addedCount);
+  const observer = new MutationObserver(domWatcher);
 
-  activated.add(prefix);
+  function controllerBySelectorAndName(selector, name, callback) {
+    document.querySelectorAll(selector).forEach(function (element) {
+      let controller = allControllers.get(prefix)?.get(element)?.get(name);
+      if (controller) {
+        callback({
+          actions: controller.getActions()
+        });
+      }
+    });
+  }
+
+  function domWatcher(records, observer) {
+    function cleanup(node) {
+      if (!node.querySelectorAll) {
+        return;
+      }
+      if (
+        node.nodeName === "BODY" ||
+        node.nodeName === "HTML" ||
+        node.nodeName === "#document"
+      ) {
+        observer.disconnect();
+        allEventListeners.forEach((listener) => listener.cleanup());
+        allEventListeners = new Map();
+        allControllers = new Map();
+        return;
+      }
+      function cleanNode(element) {
+        const listeners = allEventListeners.get(element);
+        if (listeners) {
+          listeners.forEach((listener) => listener.cleanup());
+        }
+        const controllers = allControllers.get(prefix).get(element);
+        if (controllers) {
+          controllers.forEach(function (controller) {
+            const disconnect = controller.getActions().disconnect;
+            if (disconnect) {
+              disconnect();
+            }
+          });
+          allControllers.get(prefix).delete(element);
+        }
+      }
+      node.querySelectorAll(controllersSelector).forEach(cleanNode);
+      cleanNode(node);
+    }
+    records.forEach(function (mutation) {
+      if (mutation.type === "childList") {
+        const removed = Array.from(mutation.removedNodes).filter(
+          (node) => node instanceof HTMLElement
+        );
+        removed.forEach((node) => cleanup(node));
+      }
+    });
+    records.forEach(function (mutation) {
+      if (mutation.type === "childList") {
+        const added = Array.from(mutation.addedNodes).filter(
+          (node) => node instanceof HTMLElement
+        );
+        added.forEach((node) => findControllers(node));
+      }
+    });
+  }
+
   const config = { childList: true, subtree: true };
   observer.observe(document, config);
 }

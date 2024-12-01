@@ -3,8 +3,8 @@ class AtvController < ApplicationController
   end
 
   def variations
-  end 
+  end
 
-  def by_example 
+  def by_example
   end
 end

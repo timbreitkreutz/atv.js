@@ -1,5 +1,7 @@
 function connect(targets, _values, root) {
-  targets.state.innerText = "Connected";
+  if (targets.state) {
+    targets.state.innerText = "Connected";
+  }
 
   return {
     click: function() {

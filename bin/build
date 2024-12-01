@@ -7,6 +7,11 @@ node jslint.mjs --browser --devel --white atv.js
 npx eslint atv.js || quit "Please fix eslint"
 npx prettier --trailing-comma none atv.js --write
 
+sed -e "s/activate, version/activate, version, pascalize, dasherize, allVariants, actionsFor/" atv.js > atv-test/app/javascript/atv-test.js
+echo "TEST VERSION:"
+tail atv-test/app/javascript/atv-test.js
+
+
 cd atv-test
 bin/rails assets:clobber
 bin/rails assets:precompile

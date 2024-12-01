@@ -154,7 +154,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     result = find("#result")
     assert quotient.has_text?("0")
     assert result.has_text?("0")
-    assert !extra.has_text?("DONE")
+    assert_not extra.has_text?("DONE")
     button.click
     assert quotient.has_text?("4")
     assert result.has_text?("24")
@@ -172,7 +172,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     assert aCount.has_text? "Count 0"
     aCount.click
     assert aCount.has_text? "Count 1"
-    
+
     assert page.has_text?("Connected", count: 3)
     assert_not page.has_text?("Not yet connected")
     create_button = find(".connect-button")
@@ -189,8 +189,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
 
     2.times { aCount.click }
     assert aCount.has_text? "Count 3"
-
-  end 
+  end
 
   test "removing elements" do
     visit atv_by_example_path

@@ -1,0 +1,60 @@
+<p>ATV v<span id="version"></span></p>
+
+<h1>Unit Tests</h1>
+
+<script type="module">
+import { version, pascalize, dasherize, allVariants, actionsFor } from "atv-test";
+window.pascalize = pascalize;
+window.dasherize = dasherize;
+window.allVariants = allVariants;
+window.actionsFor = actionsFor;
+
+document.getElementById("version").innerText = version;
+
+</script>
+
+<div id="action1" data-atv-blah-blah-action="click">action1</div>
+<div id="action2" data-atv-blah-blah-action="click=>clack">action2</div>
+<div id="action2a" data_atv_blah_blah_action="click=>clack">action2a</div>
+<div id="action3" data-atv-blah-blah-action="click->clack">action3</div>
+<div id="action4" data-atv-blah-blah-action="click=>how#clack">action4</div>
+<div id="action5" data-atv-action="click=>blah-blah-blah#clack">action5</div>
+<div id="action6" data-atv-another-action="click, clack">action6</div>
+<div id="action7" data-atv-another-action="click, click=>clock">action7</div>
+<div id="action8" data-atv-another-actions="click, click=>clock">action8</div>
+<div id="action9" data-atv-actions="click=>hammer, click=>nail">action9</div>
+<div id="action9a" data_atv_actions="click=>hammer, click=>nail-b">action9a</div>
+<div id="action9b" data_atv_actions="click=>hammer, click->nail_b">action9b</div>
+<div id="action10" data-atv-actions="click=>start#hammer, hover->what#ever, click=>finish#nail">action10</div>
+
+<div id="action11" data-atv-blah-blah-action="click->click(a)">action11</div>
+<div id="action12" data-atv_blah-blah-action="click(a)">action12</div>
+<div id="action13" data-atv-blah-blah-action="click(a, b)">action13</div>
+<div id="action13a" data-atv-blah-blah-action='click("a", "b")'>action13a</div>
+<div id="action14" data-atv-blah-blah-action="click->clock(a, b)">action14</div>
+
+<div id="action15" data-atv-blah-blah-action="click->clock(a, b), hover">action15</div>
+<div id="action16" data-atv-blah-blah-action="click->clock(a, b), click=>another#clicker">action16</div>
+
+<%= tag.div id:"action17", data: {
+  atv_blah_controller_actions: [
+    "click=>clock(a, b)",
+    "click=>another#clicker(d)"
+  ]
+} do %>
+  action17
+<% end %>
+
+<%= tag.div id:"action18", data: {
+  atv_actions: [
+    "click=>one#clock(a, b)",
+    "click=>another#clicker(d)"
+  ]
+} do %>
+  action18
+<% end %>
+
+<div id="action19" data-blah-blah-action="click">action19</div>
+<div id="action20" data-my-atv-blah-blah-action="click(22, 55)">action20</div>
+
+<div id="action21" data-atv-blah-blah-action="click(22, 55)" data-atv-blah-action="clack->click" data-atv-action="focus->this#that">action21</div>

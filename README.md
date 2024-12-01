@@ -82,6 +82,7 @@ Right now all the features of ATV can be seen in action at [ATV By Example](http
 
 * I'll be continuing to add more tests and documentation.
 * Namespaced controllers (i.e. `controllers/domain/do_the_thing_atv.js`)
+* Automated tests around reloading the whole page
 
 If there's demand, the following things might get added:
 * Something closer to the 'window' events of stimulus
@@ -108,6 +109,7 @@ If you like this idea and want to help out please join or start a discussion her
     * `node jslint.mjs --browser --devel --white atv.js` to the extent the following two will be able to run correctly
     * `npx eslint atv.js`
     * `npx prettier --trailing-comma none atv.js --write`
+* Some new-ish JavaScript idioms are avoided on purpose for one slightly older browser I have to support for now, e.g. the ... operator.  Soon.
 
 
 [![0 dependencies!](https://0dependencies.dev/0dependencies.svg)](https://0dependencies.dev)

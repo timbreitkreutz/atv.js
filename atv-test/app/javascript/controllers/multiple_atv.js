@@ -16,7 +16,9 @@ function connect(targets) {
       },
       clock: function() {
         clockCount += 1;
-        targets.clock.innerText = clockCount;
+        if (targets.clock) {
+          targets.clock.innerText = clockCount;
+        }
         return true;
       }
     }
