@@ -273,7 +273,7 @@ function activate(prefix = "atv") {
   if (allControllers.has(prefix)) {
     return;
   }
-  allControllers.set(prefix, new Map());
+  allControllers.set(prefix, new Map);
   const root = document.body;
   // Provide selector for any controllers given a prefix
   const controllersSelector = Array.from(
@@ -474,6 +474,9 @@ function activate(prefix = "atv") {
   }
 
   function registerControllers(root) {
+    if (!allControllers.get(prefix)) {
+      allControllers.set(prefix, new Map);
+    }
     if (!allControllers.get(prefix).has(root)) {
       allControllers.get(prefix).set(root, new Map());
     }
@@ -511,6 +514,9 @@ function activate(prefix = "atv") {
   }
 
   function findControllers(root) {
+    if (!allControllers.get(prefix)) {
+      allControllers.set(prefix, new Map);
+    }
     let initialCount = Number(allControllers.get(prefix)?.size);
     const elements = new Set();
     if (root.matches(controllersSelector)) {
@@ -554,8 +560,12 @@ function activate(prefix = "atv") {
         node.nodeName === "#document"
       ) {
         observer.disconnect();
-        allEventListeners.forEach((listener) => listener.cleanup());
-        allEventListeners = new Map();
+        if (allEventListeners) {
+          allEventListeners.forEach((element) =>
+            element.forEach((listener) => listener.cleanup())
+          );
+          allEventListeners = new Map();
+        }
         allControllers = new Map();
         return;
       }
