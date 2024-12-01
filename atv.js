@@ -110,7 +110,7 @@ function variantSelectors() {
 
 /* JSON is parsed aggressively and relies on "try" */
 function errorReport(ex) {
-  if (ex?.message?.includes("JSON Parse error:")) {
+  if (ex?.message?.includes("JSON")) {
     return;
   }
   console.error(`ATV: ${ex}`);
