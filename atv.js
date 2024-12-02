@@ -241,9 +241,6 @@ function attributesFor(element, type) {
   return list;
 }
 
-/* Cache of dynamically imported ATV modules */
-let modules = new Set();
-
 /* Look for the controllers in the importmap or just try to load them */
 function withModule(name, callback) {
   let importmapName = `${name}_atv`;
@@ -253,15 +250,9 @@ function withModule(name, callback) {
       importmapName = map[source]; // There should only be one
     }
   });
-  if (modules.has(importmapName)) {
-    callback(modules[importmapName]);
-  }
   import(importmapName)
     .then(function (module) {
-      if (!modules.has(importmapName)) {
-        modules[importmapName] = module;
-      }
-      callback(modules[importmapName]);
+      callback(module);
     })
     .catch(function (ex) {
       console.error(`Loading ${importmapName} failed:`, ex);

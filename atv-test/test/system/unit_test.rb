@@ -1,7 +1,7 @@
 require "application_system_test_case"
 
 class UnitTest < ApplicationSystemTestCase
-  VERSION = "ATV v0.1.6"
+  VERSION = "ATV v0.1.7"
 
   test "pascalize" do
     visit unit_test_path
