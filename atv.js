@@ -7,7 +7,7 @@
 //
 // Super vanilla JS / Lightweight alternative to stimulus without "class"
 // overhead and binding nonsense, just the actions, targets, and values
-// Also as underscore/hyphen indifferent as possible to ease the learning curve
+// Also more forgiving with hyphens and underscores.
 
 // The MIT License (MIT)
 
@@ -56,21 +56,20 @@ function dasherize(string) {
 
 const deCommaPattern = /,[\s+]/;
 
-/* The following methods take variable arguments (no ... for now
- * for backward compatibility) and return combinations of the list
+/* The following methods returns combinations of the given list
  * connected with dashes and underscores.  For many examples see
  * test/system/unit_test.rb
  */
-function allVariants() {
-  const words = Array.from(arguments).filter((arg) => Boolean(arg));
-  if (words.length === 0) {
+function allVariants(...words) {
+  const parts = words.filter((arg) => Boolean(arg));
+  if (parts.length === 0) {
     return [];
   }
-  const variants = dashVariants.apply(null, words);
+  const variants = dashVariants(...parts);
   return variants.flatMap((string) => [string, `${string}s`]);
 }
 
-function dashVariants() {
+function dashVariants(firstWord, ...words) {
   function dashAndUnderscores(input) {
     const string = input || "";
     if (variantPattern.test(`${string}`)) {
@@ -78,12 +77,11 @@ function dashVariants() {
     }
     return [string];
   }
-  const words = Array.from(arguments);
-  const first = dashAndUnderscores(words[0]);
-  if (words.length < 2) {
+  const first = dashAndUnderscores(firstWord);
+  if (words.length < 1) {
     return first;
   }
-  return dashVariants.apply(null, words.slice(1)).flatMap(function (str2) {
+  return dashVariants(...words).flatMap(function (str2) {
     return first.flatMap(function (str1) {
       return [`${str1}-${str2}`, `${str1}_${str2}`];
     });
@@ -91,21 +89,13 @@ function dashVariants() {
 }
 
 /* Returns a list of selectors to use for given name list */
-function variantSelectors() {
-  const results = [];
-  const container = arguments[0];
-  const words = ["data"].concat(
-    Array.from(arguments)
-      .slice(1)
-      .filter((str) => Boolean(str))
+function variantSelectors(container, ...words) {
+  return allVariants("data", ...words).flatMap((variant) =>
+    Array.from(container.querySelectorAll(`[${variant}]`)).map((element) => [
+      element,
+      variant
+    ])
   );
-  const variants = allVariants.apply(null, words);
-  variants.forEach(function (variant) {
-    container.querySelectorAll(`[${variant}]`).forEach(function (element) {
-      results.push([element, variant]);
-    });
-  });
-  return results;
 }
 
 /* JSON is parsed aggressively and relies on "try" */
@@ -120,7 +110,7 @@ function errorReport(ex) {
  * Gets all action declarations for an element, returns an array of structures.
  */
 function actionsFor(prefix, element, onlyEvent = null) {
-  let actions = [];
+  let result = [];
 
   // Parse a single action part, controller is passed in
   // if derived from the attribute key
@@ -158,7 +148,7 @@ function actionsFor(prefix, element, onlyEvent = null) {
       controller = method;
       method = event;
     }
-    actions.push({
+    result.push({
       controller: dasherize(controller),
       event,
       method,
@@ -220,7 +210,7 @@ function actionsFor(prefix, element, onlyEvent = null) {
       actionSplit(list, (action) => parseAction(action, controller));
     }
   });
-  return actions;
+  return result;
 }
 
 let allControllers = new Map();
@@ -232,13 +222,10 @@ function attributesFor(element, type) {
     return [];
   }
   const regex = new RegExp(`${type}s?$`, "i");
-  let list = [];
-  element.getAttributeNames().forEach(function (attribute) {
-    if (regex.test(attribute)) {
-      list.push(element.getAttribute(attribute));
-    }
-  });
-  return list;
+  return element
+    .getAttributeNames()
+    .filter((name) => regex.test(name))
+    .map((name) => element.getAttribute(name));
 }
 
 /* Look for the controllers in the importmap or just try to load them */
@@ -267,9 +254,7 @@ function activate(prefix = "atv") {
   allControllers.set(prefix, new Map());
   const root = document.body;
   // Provide selector for any controllers given a prefix
-  const controllersSelector = Array.from(
-    allVariants("data", prefix, "controller")
-  )
+  const controllersSelector = allVariants("data", prefix, "controller")
     .map((selector) => `[${selector}]`)
     .join(",");
 
@@ -295,66 +280,11 @@ function activate(prefix = "atv") {
     return out;
   }
 
-  // Find all declared targets for this ATV and provide them to the ATV instance
-  function findTargets(root, name) {
-    const container = root.parentNode;
-    let targets = {};
-
-    variantSelectors(container, prefix, name, "target").forEach(
-      function (item) {
-        const [element, variant] = item;
-        if (outOfScope(element, root, name)) {
-          return;
-        }
-        const key = element.getAttribute(variant);
-
-        const allKey = `all${pascalize(key)}`;
-        const pluralKey = `${key}s`;
-
-        if (targets[allKey]) {
-          targets[allKey].push(element);
-          targets[pluralKey].push(element);
-        } else if (targets[key]) {
-          targets[allKey] = [targets[key], element];
-          targets[pluralKey] = [targets[key], element];
-          delete targets[key];
-        } else {
-          targets[key] = element;
-        }
-      }
-    );
-
-    return targets;
-  }
-
-  // Find the values data element and provide it to the ATV instance
-  function findValues(element, name) {
-    let values = {};
-    Array.from(allVariants("data", prefix, name, "value")).forEach(
-      function (variant) {
-        const data = element.getAttribute(variant);
-        if (data) {
-          try {
-            Object.assign(values, JSON.parse(data));
-          } catch (ex) {
-            try {
-              Object.assign(values, JSON.parse(`{${data}}`));
-            } catch (ex2) {
-              errorReport(ex2);
-            }
-            errorReport(ex);
-          }
-        }
-      }
-    );
-    return values;
-  }
-
   /** Controller factory */
   function createController(root, name) {
     let actions;
-    let targets;
-    let values;
+    let targets = {};
+    let values = {};
 
     function getActions() {
       return actions;
@@ -436,9 +366,57 @@ function activate(prefix = "atv") {
 
     /** Call this to populate a new controller */
     function refresh() {
+      // Find all declared targets for this ATV and provide them to the ATV instance
+      function refreshTargets(root, name) {
+        const container = root.parentNode;
+
+        variantSelectors(container, prefix, name, "target").forEach(
+          function (item) {
+            const [element, variant] = item;
+            if (outOfScope(element, root, name)) {
+              return;
+            }
+            const key = element.getAttribute(variant);
+
+            const allKey = `all${pascalize(key)}`;
+            const pluralKey = `${key}s`;
+
+            if (targets[allKey]) {
+              targets[allKey].push(element);
+              targets[pluralKey].push(element);
+            } else if (targets[key]) {
+              targets[allKey] = [targets[key], element];
+              targets[pluralKey] = [targets[key], element];
+              delete targets[key];
+            } else {
+              targets[key] = element;
+            }
+          }
+        );
+      }
+
+      // Find the values data element and provide it to the ATV instance
+      function refreshValues(element, name) {
+        allVariants("data", prefix, name, "value").forEach(function (variant) {
+          const data = element.getAttribute(variant);
+          if (data) {
+            try {
+              Object.assign(values, JSON.parse(data));
+            } catch (ex) {
+              try {
+                Object.assign(values, JSON.parse(`{${data}}`));
+              } catch (ex2) {
+                errorReport(ex2);
+              }
+              errorReport(ex);
+            }
+          }
+        });
+      }
+
       return withModule(name, function (module) {
-        targets = findTargets(root, name);
-        values = findValues(root, name);
+        refreshTargets(root, name, targets);
+        refreshValues(root, name);
         const invoked = module.connect(
           targets,
           values,
@@ -581,18 +559,16 @@ function activate(prefix = "atv") {
     }
     records.forEach(function (mutation) {
       if (mutation.type === "childList") {
-        const removed = Array.from(mutation.removedNodes).filter(
-          (node) => node instanceof HTMLElement
-        );
-        removed.forEach((node) => cleanup(node));
+        Array.from(mutation.removedNodes)
+          .filter((node) => node instanceof HTMLElement)
+          .forEach((node) => cleanup(node));
       }
     });
     records.forEach(function (mutation) {
       if (mutation.type === "childList") {
-        const added = Array.from(mutation.addedNodes).filter(
-          (node) => node instanceof HTMLElement
-        );
-        added.forEach((node) => findControllers(node));
+        Array.from(mutation.addedNodes)
+          .filter((node) => node instanceof HTMLElement)
+          .forEach((node) => findControllers(node));
       }
     });
   }

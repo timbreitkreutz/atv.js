@@ -15,6 +15,6 @@ tail atv-test/app/javascript/atv-test.js
 cd atv-test
 bin/rails assets:clobber
 bin/rails assets:precompile
-bin/rails test:system || quit "Please fix tests"
+bin/rails test:system || exit "Please fix tests"
 
 echo "Build succeeded"
