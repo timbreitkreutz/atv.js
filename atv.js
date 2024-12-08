@@ -398,31 +398,35 @@ function activate(prefix = "atv") {
         variantSelectors(root.parentNode, prefix, name, "target").forEach(
           function (item) {
             const [element, variant] = item;
-            const key = element.getAttribute(variant);
-            const allKey = `all${pascalize(key)}`;
-            const pluralKey = `${key}s`;
+            element
+              .getAttribute(variant)
+              .split(deCommaPattern)
+              .forEach(function (key) {
+                const allKey = `all${pascalize(key)}`;
+                const pluralKey = `${key}s`;
 
-            if (
-              targets[key] === element ||
-              (targets[allKey] && targets[allKey].includes(element)) ||
-              outOfScope(element, root, name)
-            ) {
-              return;
-            }
-            if (targets[allKey]) {
-              targets[allKey].push(element);
-              targets[pluralKey].push(element);
-            } else if (targets[key]) {
-              targets[allKey] = [targets[key], element];
-              targets[pluralKey] = [targets[key], element];
-              delete targets[key];
-            } else {
-              targets[key] = element;
-            }
-            if (!addedTargets[key]) {
-              addedTargets[key] = [];
-            }
-            addedTargets[key].push(element);
+                if (
+                  targets[key] === element ||
+                  (targets[allKey] && targets[allKey].includes(element)) ||
+                  outOfScope(element, root, name)
+                ) {
+                  return;
+                }
+                if (targets[allKey]) {
+                  targets[allKey].push(element);
+                  targets[pluralKey].push(element);
+                } else if (targets[key]) {
+                  targets[allKey] = [targets[key], element];
+                  targets[pluralKey] = [targets[key], element];
+                  delete targets[key];
+                } else {
+                  targets[key] = element;
+                }
+                if (!addedTargets[key]) {
+                  addedTargets[key] = [];
+                }
+                addedTargets[key].push(element);
+              });
           }
         );
         middle();

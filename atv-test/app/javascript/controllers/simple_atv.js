@@ -18,7 +18,8 @@ function connect(targets, values) {
       console.log("TargetConnected")
       target.innerHtml = "Added New Target";
     },
-    thereTargetConnected: (target) => console.log("THERE", target)
+    thereTargetConnected: (target) => console.log("THERE", target),
+    hereTargetConnected: (target) => console.log("HERE", target)
   };
 }
 
