@@ -215,20 +215,23 @@ function actionsFor(prefix, element, onlyEvent = null) {
   return result;
 }
 
-let allControllers = new Map();
-let allEventListeners = new Map();
-
-// Returns a list of attributes for the type (controller, target, action, etc.)
-function attributesFor(element, type) {
+function attributeKeysFor(element, type) {
   if (!element || !element.getAttributeNames) {
     return [];
   }
   const regex = new RegExp(`${type}s?$`, "i");
-  return element
-    .getAttributeNames()
-    .filter((name) => regex.test(name))
-    .map((name) => element.getAttribute(name));
+  return element.getAttributeNames().filter((name) => regex.test(name));
 }
+
+// Returns a list of attributes for the type (controller, target, action, etc.)
+function attributesFor(element, type) {
+  return attributeKeysFor(element, type).map((name) =>
+    element.getAttribute(name)
+  );
+}
+
+let allControllers = new Map();
+let allEventListeners = new Map();
 
 /* Look for the controllers in the importmap or just try to load them */
 function withModule(name, callback) {
@@ -433,11 +436,9 @@ function activate(prefix = "atv") {
         // This part needs to happen after the controller "activate".
         Object.keys(addedTargets).forEach(function (key) {
           const callback = actions[`${key}TargetConnected`];
-          addedTargets[key].forEach(function () {
-            if (callback) {
-              callback();
-            }
-          });
+          if (callback) {
+            addedTargets[key].forEach(callback);
+          }
         });
       }
 
@@ -510,7 +511,7 @@ function activate(prefix = "atv") {
     });
   }
 
-  function findControllers(root) {
+  function updateControllers(root) {
     if (!allControllers.get(prefix)) {
       allControllers.set(prefix, new Map());
     }
@@ -531,7 +532,7 @@ function activate(prefix = "atv") {
     );
   }
 
-  findControllers(root);
+  updateControllers(root);
 
   const observer = new MutationObserver(domWatcher);
 
@@ -585,6 +586,41 @@ function activate(prefix = "atv") {
       node.querySelectorAll(controllersSelector).forEach(cleanNode);
       cleanNode(node);
     }
+
+    function controllerFor(element, name) {
+      if (!element || element === document.body) {
+        return;
+      }
+      const controller = allControllers?.get(prefix)?.get(element)?.get(name);
+      if (controller) {
+        return controller;
+      }
+      return controllerFor(element.parentNode, name);
+    }
+
+    function controllerFrom(attribute) {
+      const regex = new RegExp(`^data[-_]${prefix}[-_](.*)[-_]targets?$`);
+      const matcher = attribute.match(regex);
+      if (matcher) {
+        return matcher[1];
+      }
+    }
+
+    function updateTargets(node) {
+      if (!node || node === document.body) {
+        return;
+      }
+      attributeKeysFor(node, "target").forEach(function (attributes) {
+        attributes.split(deCommaPattern).forEach(function (attribute) {
+          const name = controllerFrom(attribute);
+          if (name) {
+            controllerFor(node, name)?.refresh();
+          }
+        });
+      });
+      updateTargets(node.parentNode);
+    }
+
     records.forEach(function (mutation) {
       if (mutation.type === "childList") {
         Array.from(mutation.removedNodes)
@@ -597,7 +633,8 @@ function activate(prefix = "atv") {
         Array.from(mutation.addedNodes)
           .filter((node) => node instanceof HTMLElement)
           .forEach(function (node) {
-            findControllers(node);
+            updateControllers(node);
+            updateTargets(node);
           });
       }
     });

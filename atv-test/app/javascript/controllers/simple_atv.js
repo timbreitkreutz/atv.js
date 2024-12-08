@@ -15,8 +15,10 @@ function connect(targets, values) {
       actor.innerText = `Clack ${counter}`;
     },
     newTargetConnected: function(target) {
-      console.log("TargetConnected")
-      target.innerHtml = "Added New Target";
+      console.log("NEW TargetConnected")
+      console.log(target);
+      window.target = target;
+      target.innerHTML = "Added New Target";
     },
     thereTargetConnected: (target) => console.log("THERE", target),
     hereTargetConnected: (target) => console.log("HERE", target)
