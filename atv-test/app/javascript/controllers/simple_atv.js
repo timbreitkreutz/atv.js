@@ -13,7 +13,12 @@ function connect(targets, values) {
     clack: function(actor) {
       counter -= 1;
       actor.innerText = `Clack ${counter}`;
-    }
+    },
+    newTargetConnected: function(target) {
+      console.log("TargetConnected")
+      target.innerHtml = "Added New Target";
+    },
+    thereTargetConnected: (target) => console.log("THERE", target)
   };
 }
 

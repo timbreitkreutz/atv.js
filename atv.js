@@ -40,6 +40,8 @@ function importMap() {
   ).imports;
 }
 
+/* ----------------- HELPER FUNCTIONS ------------------ */
+
 /* Variant in the context of ATV means either dash-case or snake_case */
 const variantPattern = /[-_]/;
 
@@ -246,14 +248,17 @@ function withModule(name, callback) {
     });
 }
 
-/* --- Main activation function --- */
+/* ----------------- Main Activation Function ------------------ */
+
 function activate(prefix = "atv") {
   if (allControllers.has(prefix)) {
     return;
   }
   allControllers.set(prefix, new Map());
   const root = document.body;
+
   // Provide selector for any controllers given a prefix
+
   const controllersSelector = allVariants("data", prefix, "controller")
     .map((selector) => `[${selector}]`)
     .join(",");
@@ -280,7 +285,28 @@ function activate(prefix = "atv") {
     return out;
   }
 
-  /** Controller factory */
+  // Optional console output mainly for development
+  const quiet = !document.querySelector(`[data-${prefix}-report="true"]`);
+  function report(count, type, action) {
+    if (quiet || count < 1) {
+      return;
+    }
+    console.log(
+      [
+        [
+          "ATV:",
+          `(${prefix})`,
+          type,
+          `[${Number(allControllers.get(prefix)?.size)}]`
+        ].join(" "),
+        `${action}: ${count}`,
+        `v${version}`
+      ].join(" / ")
+    );
+  }
+
+  /* ----------------- Controller Factory ------------------ */
+
   function createController(root, name) {
     let actions;
     let targets = {};
@@ -290,7 +316,7 @@ function activate(prefix = "atv") {
       return actions;
     }
 
-    function registerActions(root, name) {
+    function registerActions(root) {
       const controllers = allControllers.get(prefix).get(root);
 
       let elements = new Set();
@@ -364,23 +390,25 @@ function activate(prefix = "atv") {
       });
     }
 
-    /** Call this to populate a new controller */
+    // Update the in-memory controller from the DOM
     function refresh() {
-      // Find all declared targets for this ATV and provide them to the ATV instance
-      function refreshTargets(root, name) {
-        const container = root.parentNode;
+      function refreshTargets(root, middle) {
+        const addedTargets = {};
 
-        variantSelectors(container, prefix, name, "target").forEach(
+        variantSelectors(root.parentNode, prefix, name, "target").forEach(
           function (item) {
             const [element, variant] = item;
-            if (outOfScope(element, root, name)) {
-              return;
-            }
             const key = element.getAttribute(variant);
-
             const allKey = `all${pascalize(key)}`;
             const pluralKey = `${key}s`;
 
+            if (
+              targets[key] === element ||
+              (targets[allKey] && targets[allKey].includes(element)) ||
+              outOfScope(element, root, name)
+            ) {
+              return;
+            }
             if (targets[allKey]) {
               targets[allKey].push(element);
               targets[pluralKey].push(element);
@@ -391,12 +419,25 @@ function activate(prefix = "atv") {
             } else {
               targets[key] = element;
             }
+            if (!addedTargets[key]) {
+              addedTargets[key] = [];
+            }
+            addedTargets[key].push(element);
           }
         );
+        middle();
+        // This part needs to happen after the controller "activate".
+        Object.keys(addedTargets).forEach(function (key) {
+          const callback = actions[`${key}TargetConnected`];
+          addedTargets[key].forEach(function () {
+            if (callback) {
+              callback();
+            }
+          });
+        });
       }
 
-      // Find the values data element and provide it to the ATV instance
-      function refreshValues(element, name) {
+      function refreshValues(element) {
         allVariants("data", prefix, name, "value").forEach(function (variant) {
           const data = element.getAttribute(variant);
           if (data) {
@@ -414,23 +455,26 @@ function activate(prefix = "atv") {
         });
       }
 
-      return withModule(name, function (module) {
-        refreshTargets(root, name, targets);
-        refreshValues(root, name);
-        const invoked = module.connect(
-          targets,
-          values,
-          root,
-          controllerBySelectorAndName
-        );
-        // Allow for returning an collection of actions or
-        // a function returning a collection of actions
-        if (typeof invoked === "function") {
-          actions = invoked();
-        } else {
-          actions = invoked;
-        }
-        registerActions(root, name);
+      // Note that with module includes a promise return so this part finishes
+      // asynchronously.
+      withModule(name, function (module) {
+        refreshTargets(root, function () {
+          refreshValues(root);
+          const invoked = module.connect(
+            targets,
+            values,
+            root,
+            controllerBySelectorAndName
+          );
+          // Allow for returning an collection of actions or
+          // a function returning a collection of actions
+          if (typeof invoked === "function") {
+            actions = invoked();
+          } else {
+            actions = invoked;
+          }
+          registerActions(root);
+        });
       });
     }
 
@@ -462,26 +506,6 @@ function activate(prefix = "atv") {
     });
   }
 
-  // Optional console output mainly for development
-  const quiet = !document.querySelector(`[data-${prefix}-report="true"]`);
-  function report(count, type, action) {
-    if (quiet || count < 1) {
-      return;
-    }
-    console.log(
-      [
-        [
-          "ATV:",
-          `(${prefix})`,
-          type,
-          `[${Number(allControllers.get(prefix)?.size)}]`
-        ].join(" "),
-        `${action}: ${count}`,
-        `v${version}`
-      ].join(" / ")
-    );
-  }
-
   function findControllers(root) {
     if (!allControllers.get(prefix)) {
       allControllers.set(prefix, new Map());
@@ -507,6 +531,7 @@ function activate(prefix = "atv") {
 
   const observer = new MutationObserver(domWatcher);
 
+  /* --- Provided to client code to talk to other controllers --- */
   function controllerBySelectorAndName(selector, name, callback) {
     document.querySelectorAll(selector).forEach(function (element) {
       let controller = allControllers.get(prefix)?.get(element)?.get(name);
@@ -518,11 +543,10 @@ function activate(prefix = "atv") {
     });
   }
 
+  /* ------------ React to DOM changes for thi prefix --------------- */
+
   function domWatcher(records, observer) {
     function cleanup(node) {
-      if (!node.querySelectorAll) {
-        return;
-      }
       if (
         node.nodeName === "BODY" ||
         node.nodeName === "HTML" ||
@@ -568,7 +592,9 @@ function activate(prefix = "atv") {
       if (mutation.type === "childList") {
         Array.from(mutation.addedNodes)
           .filter((node) => node instanceof HTMLElement)
-          .forEach((node) => findControllers(node));
+          .forEach(function (node) {
+            findControllers(node);
+          });
       }
     });
   }

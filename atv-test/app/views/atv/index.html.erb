@@ -6,9 +6,11 @@
 
 <div id='simple' data-atv-controller="simple" data-atv-simple-values='"this": "that", "one": "two"' }'>
   <div data-atv-simple-action="click">CLICKER1</div>
-  <div data-atv-simple-actions="clack, click">FOCUS2</div>
+  <div data-atv-simple-actions="clack" data-atv-actions="click->simple#click">FOCUS2</div>
   <div data-atv-action="click->simple#clack">CLICKER3</div>
   <div data-atv-simple-target="here"></div>
-  <div data-atv-simple-target="there"></div>
+  <div id="aaa" data-atv-simple-target="there"></div>
   <div data-atv-simple-target="everywhere"></div>
+  <div id="bbb" data-atv-simple-target="there"></div>
+  <div id="ccc" data-atv-simple-target="there"></div>
 </div>

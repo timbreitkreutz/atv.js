@@ -12,6 +12,9 @@ function connect(targets, _values, root) {
           </button>
         </div>
       `);
+    },
+    stateTargetConnected: function() {
+      targets.state.innerText = "Connected";
     }
   };
 }
