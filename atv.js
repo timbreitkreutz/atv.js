@@ -231,6 +231,7 @@ function attributesFor(element, type) {
 }
 
 let allControllers = new Map();
+let allControllerNames = new Set();
 let allEventListeners = new Map();
 
 /* Look for the controllers in the importmap or just try to load them */
@@ -314,6 +315,7 @@ function activate(prefix = "atv") {
     let actions;
     let targets = {};
     let values = {};
+    allControllerNames.add(name);
 
     function getActions() {
       return actions;
@@ -598,27 +600,15 @@ function activate(prefix = "atv") {
       return controllerFor(element.parentNode, name);
     }
 
-    function controllerFrom(attribute) {
-      const regex = new RegExp(`^data[-_]${prefix}[-_](.*)[-_]targets?$`);
-      const matcher = attribute.match(regex);
-      if (matcher) {
-        return matcher[1];
-      }
-    }
-
-    function updateTargets(node) {
-      if (!node || node === document.body) {
-        return;
-      }
-      attributeKeysFor(node, "target").forEach(function (attributes) {
-        attributes.split(deCommaPattern).forEach(function (attribute) {
-          const name = controllerFrom(attribute);
-          if (name) {
-            controllerFor(node, name)?.refresh();
+    function updateTargets(element) {
+      Array.from(allControllerNames).forEach(function (name) {
+        controllerFor(element, name)?.refresh();
+        variantSelectors(element, prefix, name, "target").forEach(
+          function (item) {
+            controllerFor(item[0], name)?.refresh();
           }
-        });
+        );
       });
-      updateTargets(node.parentNode);
     }
 
     records.forEach(function (mutation) {
@@ -633,8 +623,8 @@ function activate(prefix = "atv") {
         Array.from(mutation.addedNodes)
           .filter((node) => node instanceof HTMLElement)
           .forEach(function (node) {
-            updateControllers(node);
             updateTargets(node);
+            updateControllers(node);
           });
       }
     });
