@@ -232,7 +232,6 @@ function attributesFor(element, type) {
 
 let allControllers = new Map();
 let allControllerNames = new Set();
-let allEventListeners = new Map();
 
 /* Look for the controllers in the importmap or just try to load them */
 function withModule(name, callback) {
@@ -371,25 +370,6 @@ function activate(prefix = "atv") {
           }
 
           const handler = (event) => invokeNext(event, list);
-          function cleanup() {
-            element.removeEventListener(eventName, handler);
-          }
-          const signature = {
-            cleanup,
-            element,
-            eventName,
-            handler,
-            name,
-            prefix
-          };
-          let elementActions = allEventListeners.get(element);
-
-          if (!elementActions) {
-            elementActions = [signature];
-          } else {
-            elementActions.push(signature);
-          }
-          allEventListeners.set(element, elementActions);
           element.addEventListener(eventName, handler);
         });
       });
@@ -560,20 +540,10 @@ function activate(prefix = "atv") {
         node.nodeName === "#document"
       ) {
         observer.disconnect();
-        if (allEventListeners) {
-          allEventListeners.forEach((element) =>
-            element.forEach((listener) => listener.cleanup())
-          );
-          allEventListeners = new Map();
-        }
         allControllers = new Map();
         return;
       }
       function cleanNode(element) {
-        const listeners = allEventListeners.get(element);
-        if (listeners) {
-          listeners.forEach((listener) => listener.cleanup());
-        }
         const controllers = allControllers.get(prefix).get(element);
         if (controllers) {
           controllers.forEach(function (controller) {
