@@ -1,10 +1,10 @@
 function connect(targets, _values, root) {
-  if (targets.state) {
-    targets.state.innerText = "Connected";
+  if (targets.states) {
+    targets.states.forEach((element) => element.innerText = "Connected");
   }
 
   return {
-    click: function() {
+    click: function(actor) {
       root.insertAdjacentHTML("afterend", `
         <div data-atv-controller="connecting" id="${Math.random()}">
           <button class="connect-button" data-atv-connecting-action="click" data-atv-connecting-target="state">
@@ -12,12 +12,14 @@ function connect(targets, _values, root) {
           </button>
         </div>
       `);
+      console.log("TT")
+      console.log(targets.state);
     },
     stateTargetConnected: function() {
       targets.state.innerText = "Connected";
     },
     stateTargetDisconnected: function(element) {
-      root.insertAdjacentHTML("beforeend", `<p>STATE IS DISCONNECTED ${element.innerText}<p/>`)
+      root.insertAdjacentHTML("beforeend", `<p>STATE IS DISCONNECTED ${element.innerText} ${targets.states?.length}<p/>`)
     },
   };
 }

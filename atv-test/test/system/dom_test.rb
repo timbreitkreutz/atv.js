@@ -18,15 +18,15 @@ class DomTest < ApplicationSystemTestCase
 
   test "removing a target" do
     visit atv_by_example_path
-    assert_not page.has_text?("STATE IS DISCONNECTED Connected")
+    assert_not page.has_text?("STATE IS DISCONNECTED Connected 1")
     assert page.has_css?("#simple-controller")
 
     js = <<~JS
       (function() { 
-        document.querySelector(".connect-button").remove();
+        document.querySelector(".connect-button-2").remove();
       })();
     JS
     result = page.evaluate_script(js)
-    assert page.has_text?("STATE IS DISCONNECTED Connected")
+    assert page.has_text?("STATE IS DISCONNECTED Connected 1")
   end
 end

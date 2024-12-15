@@ -173,19 +173,19 @@ class AtvBasicsTest < ApplicationSystemTestCase
     aCount.click
     assert aCount.has_text? "Count 1"
 
-    assert page.has_text?("Connected", count: 3)
+    assert page.has_text?("Connected", count: 4)
     assert_not page.has_text?("Not yet connected")
     create_button = find(".connect-button")
     create_button.click
     assert_not page.has_text?("Not yet connected")
-    assert page.has_text?("Connected", count: 4)
+    assert page.has_text?("Connected", count: 5)
     create_button.click
     assert_not page.has_text?("Not yet connected")
-    assert page.has_text?("Connected", count: 5)
+    assert page.has_text?("Connected", count: 6)
     last_button = page.all(".connect-button").last
     last_button.click
     assert_not page.has_text?("Not yet connected")
-    assert page.has_text?("Connected", count: 6)
+    assert page.has_text?("Connected", count: 7)
 
     2.times { aCount.click }
     assert aCount.has_text? "Count 3"

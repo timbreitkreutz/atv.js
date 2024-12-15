@@ -383,10 +383,8 @@ function activate(prefix = "atv") {
 
           const handler = (event) => invokeNext(event, list);
           const events = findOrInitalize(allEventListeners, prefix, element);
-          const existingCallback = events.get(eventName);
-          if (existingCallback) {
-            element.removeEventListener(eventName, existingCallback);
-            events.delete(eventName);
+          if (events.get(eventName)) {
+            return;
           }
           element.addEventListener(eventName, handler);
           events.set(eventName, handler);
@@ -521,11 +519,11 @@ function activate(prefix = "atv") {
   }
 
   function registerControllers(root) {
-        if (!allControllers.get(prefix)) {
-            allControllers.set(prefix, new Map());
-          }
-          if (!allControllers.get(prefix).has(root)) {
-            allControllers.get(prefix).set(root, new Map());
+    if (!allControllers.get(prefix)) {
+      allControllers.set(prefix, new Map());
+    }
+    if (!allControllers.get(prefix).has(root)) {
+      allControllers.get(prefix).set(root, new Map());
     }
 
     attributesFor(root, "controller").forEach(function (attribute) {
