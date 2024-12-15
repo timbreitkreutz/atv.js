@@ -281,7 +281,7 @@ function activate(prefix = "atv") {
   // To allow for nesting controllers:
   // skip if it's not the nearest enclosing controller
   function outOfScope(element, root, name) {
-    if (!element) {
+    if (!element || element.nodeType === "BODY") {
       return true;
     }
     const closestRoot = element.closest(controllersSelector);
@@ -294,7 +294,7 @@ function activate(prefix = "atv") {
       if (list.includes(name)) {
         out = !(closestRoot === root);
       } else {
-        out = outOfScope(closestRoot.parentElement, root, name);
+        out = outOfScope(closestRoot.parentNode, root, name);
       }
     });
     return out;
@@ -376,7 +376,9 @@ function activate(prefix = "atv") {
                 }
               }
             }
-            return invokeNext(event, actions.slice(1));
+            if (actions.length > 1) {
+              return invokeNext(event, actions.slice(1));
+            }
           }
 
           const handler = (event) => invokeNext(event, list);
@@ -400,7 +402,7 @@ function activate(prefix = "atv") {
           return [`all${pascalize(key)}`, `${key}s`];
         }
 
-        variantSelectors(root.parentElement, prefix, name, "target").forEach(
+        variantSelectors(root.parentNode, prefix, name, "target").forEach(
           function (item) {
             const [element, variant] = item;
             element
@@ -519,11 +521,11 @@ function activate(prefix = "atv") {
   }
 
   function registerControllers(root) {
-    if (!allControllers.get(prefix)) {
-      allControllers.set(prefix, new Map());
-    }
-    if (!allControllers.get(prefix).has(root)) {
-      allControllers.get(prefix).set(root, new Map());
+        if (!allControllers.get(prefix)) {
+            allControllers.set(prefix, new Map());
+          }
+          if (!allControllers.get(prefix).has(root)) {
+            allControllers.get(prefix).set(root, new Map());
     }
 
     attributesFor(root, "controller").forEach(function (attribute) {
@@ -566,7 +568,9 @@ function activate(prefix = "atv") {
   /* --- Provided to client code to talk to other controllers --- */
   function controllerBySelectorAndName(selector, name, callback) {
     document.querySelectorAll(selector).forEach(function (element) {
-      let controller = allControllers.get(prefix)?.get(element)?.get(name);
+      let controller = findOrInitalize(allControllers, prefix, element)?.get(
+        name
+      );
       if (controller) {
         callback({
           actions: controller.getActions()
@@ -600,7 +604,7 @@ function activate(prefix = "atv") {
         }
       }
       function cleanNode(element) {
-        const controllers = allControllers.get(prefix).get(element);
+        const controllers = findOrInitalize(allControllers, prefix, element);
         if (controllers) {
           controllers.forEach(function (controller) {
             const disconnect = controller.getActions().disconnect;
@@ -617,14 +621,16 @@ function activate(prefix = "atv") {
     }
 
     function controllerFor(element, name) {
-      if (!element) {
+      if (!element || element === document.body) {
         return;
       }
-      const controller = allControllers?.get(prefix)?.get(element)?.get(name);
+      const controller = findOrInitalize(allControllers, prefix, element)?.get(
+        name
+      );
       if (controller !== undefined) {
         return controller;
       }
-      return controllerFor(element.parentElement, name);
+      return controllerFor(element.parentNode, name);
     }
 
     function updateTargets(element) {
