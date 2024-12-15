@@ -230,9 +230,20 @@ function attributesFor(element, type) {
   );
 }
 
+const allControllerNames = new Set();
+const allEventListeners = new Map();
+const allTargets = new Map();
 let allControllers = new Map();
-let allControllerNames = new Set();
-let allTargets = new Map();
+
+function findOrInitalize(map, prefix, element, initial = null) {
+  if (!map.has(prefix)) {
+    map.set(prefix, new Map());
+  }
+  if (!map.get(prefix).has(element)) {
+    map.get(prefix).set(element, initial ?? new Map());
+  }
+  return map.get(prefix).get(element);
+}
 
 /* Look for the controllers in the importmap or just try to load them */
 function withModule(name, callback) {
@@ -337,11 +348,9 @@ function activate(prefix = "atv") {
         // Get action definitions
         const list = actionsFor(prefix, element);
         // Collect the events
-        let events = new Set();
-        // Build the list of distinct events
-        list.forEach((action) => events.add(action.event));
+        const eventNames = new Set(list.map((action) => action.event));
         // Make one handler for each event type
-        events.forEach(function (eventName) {
+        eventNames.forEach(function (eventName) {
           const firstForEvent = list.find(
             (action) => action.event === eventName
           );
@@ -371,7 +380,14 @@ function activate(prefix = "atv") {
           }
 
           const handler = (event) => invokeNext(event, list);
+          const events = findOrInitalize(allEventListeners, prefix, element);
+          const existingCallback = events.get(eventName);
+          if (existingCallback) {
+            element.removeEventListener(eventName, existingCallback);
+            events.delete(eventName);
+          }
           element.addEventListener(eventName, handler);
+          events.set(eventName, handler);
         });
       });
     }
@@ -380,6 +396,9 @@ function activate(prefix = "atv") {
     function refresh() {
       function refreshTargets(root, middle) {
         const addedTargets = {};
+        function collectionKeys(key) {
+          return [`all${pascalize(key)}`, `${key}s`];
+        }
 
         variantSelectors(root.parentElement, prefix, name, "target").forEach(
           function (item) {
@@ -388,8 +407,7 @@ function activate(prefix = "atv") {
               .getAttribute(variant)
               .split(deCommaPattern)
               .forEach(function (key) {
-                const allKey = `all${pascalize(key)}`;
-                const pluralKey = `${key}s`;
+                const [allKey, pluralKey] = collectionKeys(key);
 
                 if (
                   targets[key] === element ||
@@ -404,7 +422,7 @@ function activate(prefix = "atv") {
                 } else if (targets[key]) {
                   targets[allKey] = [targets[key], element];
                   targets[pluralKey] = [targets[key], element];
-                  delete targets[key];
+                  // delete targets[key];
                 } else {
                   targets[key] = element;
                 }
@@ -424,14 +442,28 @@ function activate(prefix = "atv") {
           }
           const disconnectedCallback = actions[`${key}TargetDisconnected`];
           if (disconnectedCallback) {
-            if (!allTargets.get(prefix)) {
-              allTargets.set(prefix, new Map());
-            }
             addedTargets[key].forEach(function (element) {
-              if (!allTargets.get(prefix).get(element)) {
-                allTargets.get(prefix).set(element, []);
-              }
-              allTargets.get(prefix).get(element).push(disconnectedCallback);
+              findOrInitalize(allTargets, prefix, element, []).push(
+                function () {
+                  const [allKey, pluralKey] = collectionKeys(key);
+                  let index = targets[allKey]?.indexOf(element);
+                  if (index) {
+                    targets[allKey].splice(index, 1);
+                  }
+                  index = targets[pluralKey]?.indexOf(element);
+                  if (index) {
+                    targets[pluralKey].splice(index, 1);
+                  }
+                  if (targets[key] === element) {
+                    if (targets[allKey]) {
+                      targets[key] = targets[allKey][0];
+                    } else {
+                      delete targets[allKey];
+                    }
+                  }
+                  disconnectedCallback(element);
+                }
+              );
             });
           }
         });
