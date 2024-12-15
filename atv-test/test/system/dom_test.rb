@@ -15,4 +15,18 @@ class DomTest < ApplicationSystemTestCase
     result = page.evaluate_script(js)
     assert page.has_text?("Added New Target")
   end
+
+  test "removing a target" do
+    visit atv_by_example_path
+    assert_not page.has_text?("STATE IS DISCONNECTED Connected")
+    assert page.has_css?("#simple-controller")
+
+    js = <<~JS
+      (function() { 
+        document.querySelector(".connect-button").remove();
+      })();
+    JS
+    result = page.evaluate_script(js)
+    assert page.has_text?("STATE IS DISCONNECTED Connected")
+  end
 end

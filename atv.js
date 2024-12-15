@@ -232,6 +232,7 @@ function attributesFor(element, type) {
 
 let allControllers = new Map();
 let allControllerNames = new Set();
+let allTargets = new Map();
 
 /* Look for the controllers in the importmap or just try to load them */
 function withModule(name, callback) {
@@ -269,7 +270,7 @@ function activate(prefix = "atv") {
   // To allow for nesting controllers:
   // skip if it's not the nearest enclosing controller
   function outOfScope(element, root, name) {
-    if (!element || element.nodeType === "BODY") {
+    if (!element) {
       return true;
     }
     const closestRoot = element.closest(controllersSelector);
@@ -282,7 +283,7 @@ function activate(prefix = "atv") {
       if (list.includes(name)) {
         out = !(closestRoot === root);
       } else {
-        out = outOfScope(closestRoot.parentNode, root, name);
+        out = outOfScope(closestRoot.parentElement, root, name);
       }
     });
     return out;
@@ -380,7 +381,7 @@ function activate(prefix = "atv") {
       function refreshTargets(root, middle) {
         const addedTargets = {};
 
-        variantSelectors(root.parentNode, prefix, name, "target").forEach(
+        variantSelectors(root.parentElement, prefix, name, "target").forEach(
           function (item) {
             const [element, variant] = item;
             element
@@ -417,9 +418,21 @@ function activate(prefix = "atv") {
         middle();
         // This part needs to happen after the controller "activate".
         Object.keys(addedTargets).forEach(function (key) {
-          const callback = actions[`${key}TargetConnected`];
-          if (callback) {
-            addedTargets[key].forEach(callback);
+          const connectedCallback = actions[`${key}TargetConnected`];
+          if (connectedCallback) {
+            addedTargets[key].forEach(connectedCallback);
+          }
+          const disconnectedCallback = actions[`${key}TargetDisconnected`];
+          if (disconnectedCallback) {
+            if (!allTargets.get(prefix)) {
+              allTargets.set(prefix, new Map());
+            }
+            addedTargets[key].forEach(function (element) {
+              if (!allTargets.get(prefix).get(element)) {
+                allTargets.get(prefix).set(element, []);
+              }
+              allTargets.get(prefix).get(element).push(disconnectedCallback);
+            });
           }
         });
       }
@@ -534,6 +547,7 @@ function activate(prefix = "atv") {
 
   function domWatcher(records, observer) {
     function cleanup(node) {
+      // Hard reset
       if (
         node.nodeName === "BODY" ||
         node.nodeName === "HTML" ||
@@ -542,6 +556,16 @@ function activate(prefix = "atv") {
         observer.disconnect();
         allControllers = new Map();
         return;
+      }
+      // Inner DOM reset
+      function cleanTargets(element) {
+        if (element && element.children.length > 0) {
+          Array.from(element.children).forEach(cleanTargets);
+        }
+        const disconnectors = allTargets.get(prefix)?.get(element);
+        if (disconnectors) {
+          disconnectors.forEach((callback) => callback(element));
+        }
       }
       function cleanNode(element) {
         const controllers = allControllers.get(prefix).get(element);
@@ -555,19 +579,20 @@ function activate(prefix = "atv") {
           allControllers.get(prefix).delete(element);
         }
       }
+      cleanTargets(node);
       node.querySelectorAll(controllersSelector).forEach(cleanNode);
       cleanNode(node);
     }
 
     function controllerFor(element, name) {
-      if (!element || element === document.body) {
+      if (!element) {
         return;
       }
       const controller = allControllers?.get(prefix)?.get(element)?.get(name);
-      if (controller) {
+      if (controller !== undefined) {
         return controller;
       }
-      return controllerFor(element.parentNode, name);
+      return controllerFor(element.parentElement, name);
     }
 
     function updateTargets(element) {

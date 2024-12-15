@@ -15,7 +15,10 @@ function connect(targets, _values, root) {
     },
     stateTargetConnected: function() {
       targets.state.innerText = "Connected";
-    }
+    },
+    stateTargetDisconnected: function(element) {
+      root.insertAdjacentHTML("beforeend", `<p>STATE IS DISCONNECTED ${element.innerText}<p/>`)
+    },
   };
 }
 
