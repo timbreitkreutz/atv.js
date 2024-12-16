@@ -67,27 +67,24 @@ function allVariants(...words) {
   if (parts.length === 0) {
     return [];
   }
-  const variants = dashVariants(...parts);
-  return variants.flatMap((string) => [string, `${string}s`]);
+  return dashVariants(...parts).flatMap((string) => [string, `${string}s`]);
 }
 
 function dashVariants(firstWord, ...words) {
-  function dashAndUnderscores(input) {
+  function dashOrUnderscore(input) {
     const string = input || "";
-    if (variantPattern.test(`${string}`)) {
+    if (variantPattern.test(string)) {
       return [dasherize(string), string.replace(/-/g, "_")];
     }
     return [string];
   }
-  const first = dashAndUnderscores(firstWord);
+  const first = dashOrUnderscore(firstWord);
   if (words.length < 1) {
     return first;
   }
-  return dashVariants(...words).flatMap(function (str2) {
-    return first.flatMap(function (str1) {
-      return [`${str1}-${str2}`, `${str1}_${str2}`];
-    });
-  });
+  return dashVariants(...words).flatMap((str2) =>
+    first.flatMap((str1) => [`${str1}-${str2}`, `${str1}_${str2}`])
+  );
 }
 
 /* Returns a list of selectors to use for given name list */
@@ -114,15 +111,19 @@ function errorReport(ex) {
 function actionsFor(prefix, element, onlyEvent = null) {
   let result = [];
 
+  const functionSeparator = /[\s]*[-=]>[\s]*/;
+  const paramSeparator = /[()]/;
+
   // Parse a single action part, controller is passed in
   // if derived from the attribute key
   function parseAction(action, controller) {
     let method;
     let parameters = [];
-    let [event, call] = action.split(/[\s]*[-=]>[\s]*/);
+    let [event, rightSide] = action.split(functionSeparator);
 
-    if (call) {
-      let [innerController, methodCall] = call.split("#");
+    // Figure out what to do with the part on the right of the "=> blah#blah"
+    if (rightSide) {
+      let [innerController, methodCall] = rightSide.split("#");
       if (methodCall) {
         controller = innerController;
       } else {
@@ -132,7 +133,7 @@ function actionsFor(prefix, element, onlyEvent = null) {
     } else {
       method = event;
     }
-    const [methodName, params] = method.split(/[()]/);
+    const [methodName, params] = method.split(paramSeparator);
     if (params) {
       method = methodName;
       parameters = params.split(deCommaPattern);
@@ -143,6 +144,7 @@ function actionsFor(prefix, element, onlyEvent = null) {
       }
       event = event.split("(")[0];
     }
+    // Sometimes we only care about a given event name passed in.
     if (onlyEvent && event !== onlyEvent) {
       return;
     }
@@ -191,7 +193,6 @@ function actionsFor(prefix, element, onlyEvent = null) {
     );
 
     let controller;
-
     let matched = name.match(qualified);
     if (matched) {
       controller = matched[1];
@@ -235,6 +236,8 @@ const allEventListeners = new Map();
 const allTargets = new Map();
 let allControllers = new Map();
 
+// The three maps above all have the same structure: prefix
+// first (atv, etc.), then element, then a Map of those things.
 function findOrInitalize(map, prefix, element, initial = null) {
   if (!map.has(prefix)) {
     map.set(prefix, new Map());
@@ -269,7 +272,6 @@ function activate(prefix = "atv") {
   if (allControllers.has(prefix)) {
     return;
   }
-  allControllers.set(prefix, new Map());
   const root = document.body;
 
   // Provide selector for any controllers given a prefix
@@ -333,7 +335,7 @@ function activate(prefix = "atv") {
     }
 
     function registerActions(root) {
-      const controllers = allControllers.get(prefix).get(root);
+      const controllers = findOrInitalize(allControllers, prefix, root);
 
       let elements = new Set();
       function collectElements(item) {
@@ -472,18 +474,16 @@ function activate(prefix = "atv") {
       function refreshValues(element) {
         allVariants("data", prefix, name, "value").forEach(function (variant) {
           const data = element.getAttribute(variant);
-          if (data) {
+          if (!data) {
+            return;
+          }
+          [data, `{${data}}`].forEach(function (json) {
             try {
-              Object.assign(values, JSON.parse(data));
+              Object.assign(values, JSON.parse(json));
             } catch (ex) {
-              try {
-                Object.assign(values, JSON.parse(`{${data}}`));
-              } catch (ex2) {
-                errorReport(ex2);
-              }
               errorReport(ex);
             }
-          }
+          });
         });
       }
 
@@ -519,12 +519,7 @@ function activate(prefix = "atv") {
   }
 
   function registerControllers(root) {
-    if (!allControllers.get(prefix)) {
-      allControllers.set(prefix, new Map());
-    }
-    if (!allControllers.get(prefix).has(root)) {
-      allControllers.get(prefix).set(root, new Map());
-    }
+    findOrInitalize(allControllers, prefix, root);
 
     attributesFor(root, "controller").forEach(function (attribute) {
       attribute.split(deCommaPattern).forEach(function (controllerName) {
@@ -539,9 +534,6 @@ function activate(prefix = "atv") {
   }
 
   function updateControllers(root) {
-    if (!allControllers.get(prefix)) {
-      allControllers.set(prefix, new Map());
-    }
     let initialCount = Number(allControllers.get(prefix)?.size);
     const elements = new Set();
     if (root.matches(controllersSelector)) {
@@ -601,7 +593,7 @@ function activate(prefix = "atv") {
           disconnectors.forEach((callback) => callback(element));
         }
       }
-      function cleanNode(element) {
+      function cleanActions(element) {
         const controllers = findOrInitalize(allControllers, prefix, element);
         if (controllers) {
           controllers.forEach(function (controller) {
@@ -614,21 +606,18 @@ function activate(prefix = "atv") {
         }
       }
       cleanTargets(node);
-      node.querySelectorAll(controllersSelector).forEach(cleanNode);
-      cleanNode(node);
+      node.querySelectorAll(controllersSelector).forEach(cleanActions);
+      cleanActions(node);
     }
 
     function controllerFor(element, name) {
       if (!element || element === document.body) {
         return;
       }
-      const controller = findOrInitalize(allControllers, prefix, element)?.get(
-        name
+      return (
+        findOrInitalize(allControllers, prefix, element)?.get(name) ||
+        controllerFor(element.parentNode, name)
       );
-      if (controller !== undefined) {
-        return controller;
-      }
-      return controllerFor(element.parentNode, name);
     }
 
     function updateTargets(element) {
