@@ -81,18 +81,18 @@ Right now all the features of ATV can be seen in action at [ATV By Example](http
 ## Coming Soon!
 
 * I'll be continuing to add more tests and documentation.
-* Namespaced controllers (i.e. `controllers/domain/do_the_thing_atv.js`)
 * Automated tests around reloading the whole page
 
 If there's demand, the following things might get added:
+* Namespaced controllers (i.e. `controllers/domain/do_the_thing_atv.js`)
 * Something closer to the 'window' events of stimulus
 * Broken out values, vs a single JSON attribute
-* Ability to modify attributes in the DOM and pick up the changes, e.g. new targets added dynamically
+* Ability to modify attributes in the DOM and pick up the changes, e.g. new targets added or removed dynamically to existing elements
 
 ## Contributing
 
-ATV is still a very young project.
-This incarnation started afresh in August 2024 after a couple of previous sketches and prototypes were thrown out.
+ATV is still a young project.
+This incarnation started afresh in August, 2024 after a couple of previous sketches and prototypes were thrown out.
 
 If you like this idea and want to help out please join or start a discussion here on the GitHub page. I'm looking for like minded rails fans who also are striving to do clean, minimalist JavaScript along the lines of Douglas Crockford (JavaScript--The Good Parts).
 
@@ -113,3 +113,4 @@ If you like this idea and want to help out please join or start a discussion her
 
 
 [![0 dependencies!](https://0dependencies.dev/0dependencies.svg)](https://0dependencies.dev)
+[![Vanilla JS!](http://vanilla-js.com/assets/button.png)](http://vanilla-js.com)
