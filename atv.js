@@ -1,5 +1,5 @@
 /*global
-  console, document, MutationObserver, HTMLElement
+  console, document, MutationObserver
 */
 
 //
@@ -631,17 +631,20 @@ function activate(prefix = "atv") {
       });
     }
 
+    function HTMLElements(node) {
+      return Boolean(node.classList);
+    }
     records.forEach(function (mutation) {
       if (mutation.type === "childList") {
         Array.from(mutation.removedNodes)
-          .filter((node) => node instanceof HTMLElement)
+          .filter(HTMLElements)
           .forEach((node) => cleanup(node));
       }
     });
     records.forEach(function (mutation) {
       if (mutation.type === "childList") {
         Array.from(mutation.addedNodes)
-          .filter((node) => node instanceof HTMLElement)
+          .filter(HTMLElements)
           .forEach(function (node) {
             updateTargets(node);
             updateControllers(node);
