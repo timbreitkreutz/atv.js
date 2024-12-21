@@ -410,7 +410,6 @@ function activate(prefix = "atv") {
               .split(deCommaPattern)
               .forEach(function (key) {
                 const [allKey, pluralKey] = collectionKeys(key);
-
                 if (
                   targets[key] === element ||
                   (targets[allKey] && targets[allKey].includes(element)) ||
@@ -569,7 +568,7 @@ function activate(prefix = "atv") {
     });
   }
 
-  /* ------------ React to DOM changes for thi prefix --------------- */
+  /* ------------ React to DOM changes for this prefix --------------- */
 
   function domWatcher(records, observer) {
     function cleanup(node) {
@@ -590,7 +589,8 @@ function activate(prefix = "atv") {
         }
         const disconnectors = allTargets.get(prefix)?.get(element);
         if (disconnectors) {
-          disconnectors.forEach((callback) => callback(element));
+          disconnectors.forEach((callback) => callback());
+          disconnectors.splice(0, disconnectors.length);
         }
       }
       function cleanActions(element) {

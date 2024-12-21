@@ -22,11 +22,33 @@ class DomTest < ApplicationSystemTestCase
     assert page.has_css?("#simple-controller")
 
     js = <<~JS
-      (function() { 
-        document.querySelector(".connect-button-2").remove();
-      })();
+      document.querySelector(".connect-button-2").remove();
     JS
     result = page.evaluate_script(js)
     assert page.has_text?("STATE IS DISCONNECTED Connected 1")
+  end
+
+  test "adding and removing multiples" do
+    visit atv_by_example_path
+    
+    page.evaluate_script <<~JS
+      (function() {
+        const controller = document.getElementById("connect2");
+        controller.insertAdjacentHTML("beforeend", '<div id="mm5" class="multi"><div data-atv-connecting-target="multi">M5</div></div>');
+        controller.insertAdjacentHTML("beforeend", '<div id="mm6" class="multi" data-atv-connecting-target="multi">M6</div>');
+      })();
+    JS
+
+    js = <<~JS
+      (function() {
+        document.querySelector(".multi")?.remove();
+      })();
+    JS
+    6.downto(1).each do |ii|
+
+      result = page.evaluate_script(js)
+      assert page.has_text?("Count Is: #{ii}")
+
+    end
   end
 end
