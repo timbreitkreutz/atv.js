@@ -1,6 +1,7 @@
 /*global
   console, document, MutationObserver
 */
+/*jslint white indent2*/
 
 //
 // ATV.js: Actions, Targets, Values
@@ -43,7 +44,7 @@ function importMap() {
 /* ----------------- HELPER FUNCTIONS ------------------ */
 
 /* Variant in the context of ATV means either dash-case or snake_case */
-const variantPattern = /[-_]/;
+const variantPattern = /[\-_]/;
 
 function pascalize(string) {
   return string
@@ -110,8 +111,6 @@ function errorReport(ex) {
  */
 function actionsFor(prefix, element, onlyEvent = null) {
   let result = [];
-
-  const functionSeparator = /[\s]*[-=]>[\s]*/;
   const paramSeparator = /[()]/;
 
   // Parse a single action part, controller is passed in
@@ -119,7 +118,7 @@ function actionsFor(prefix, element, onlyEvent = null) {
   function parseAction(action, controller) {
     let method;
     let parameters = [];
-    let [event, rightSide] = action.split(functionSeparator);
+    let [event, rightSide] = action.split(/[\s]*[\-=]>[\s]*/);
 
     // Figure out what to do with the part on the right of the "=> blah#blah"
     if (rightSide) {
