@@ -1,7 +1,7 @@
 /*global
   console, document, MutationObserver
 */
-/*jslint white indent2*/
+/*jslint white*/
 
 //
 // ATV.js: Actions, Targets, Values
@@ -32,7 +32,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.1.7";
+const version = "0.1.8";
 
 // To dynamically load up the ATV javascripts if needed
 function importMap() {
