@@ -370,8 +370,13 @@ function activate(prefix = "atv") {
             ) {
               const callbacks = controllers.get(action.controller).getActions();
               const callback = callbacks[action.method];
+              let result;
               if (callback) {
-                const result = callback(event.target, event, action.parameters);
+                try {
+                  result = callback(event.target, event, action.parameters);
+                } catch (error) {
+                  console.error(`ATV ${prefix}: ${eventName}=>${name}`, error);
+                }
                 if (result === false) {
                   return;
                 }
