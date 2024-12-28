@@ -359,6 +359,17 @@ function activate(prefix = "atv") {
           }
 
           function invokeNext(event, actions) {
+            function invoke(callback) {
+              if (callback) {
+                try {
+                  return callback(event.target, event, action.parameters);
+                } catch (error) {
+                  console.error(`ATV ${prefix}: ${eventName}->${name}`, error);
+                  return false;
+                }
+              }
+              return true;
+            }
             if (actions.length < 1) {
               return;
             }
@@ -368,23 +379,11 @@ function activate(prefix = "atv") {
               !outOfScope(element, root, action.controller)
             ) {
               const callbacks = controllers.get(action.controller).getActions();
-              const callback = callbacks[action.method];
-              let result;
-              if (callback) {
-                try {
-                  result = callback(event.target, event, action.parameters);
-                } catch (error) {
-                  console.error(`ATV ${prefix}: ${eventName}->${name}`, error);
-                }
-                if (result === false) {
-                  event.stopPropagation();
-                  return;
-                }
+              if (invoke(callbacks[action.method]) === false) {
+                return;
               }
             }
-            if (actions.length > 1) {
-              return invokeNext(event, actions.slice(1));
-            }
+            return invokeNext(event, actions.slice(1));
           }
           element.addEventListener(eventName, (event) =>
             invokeNext(event, list)
