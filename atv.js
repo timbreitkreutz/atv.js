@@ -375,9 +375,10 @@ function activate(prefix = "atv") {
                 try {
                   result = callback(event.target, event, action.parameters);
                 } catch (error) {
-                  console.error(`ATV ${prefix}: ${eventName}=>${name}`, error);
+                  console.error(`ATV ${prefix}: ${eventName}->${name}`, error);
                 }
                 if (result === false) {
+                  event.stopPropagation();
                   return;
                 }
               }

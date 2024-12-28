@@ -1,5 +1,5 @@
 
-function connect(targets, values) {
+function connect(targets) {
   let counter = 0;
 
   return {
