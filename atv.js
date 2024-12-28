@@ -231,7 +231,6 @@ function attributesFor(element, type) {
 }
 
 const allControllerNames = new Set();
-const allEventListeners = new Map();
 const allTargets = new Map();
 let allControllers = new Map();
 
@@ -387,14 +386,9 @@ function activate(prefix = "atv") {
               return invokeNext(event, actions.slice(1));
             }
           }
-
-          const handler = (event) => invokeNext(event, list);
-          const events = findOrInitalize(allEventListeners, prefix, element);
-          if (events.get(eventName)) {
-            return;
-          }
-          element.addEventListener(eventName, handler);
-          events.set(eventName, handler);
+          element.addEventListener(eventName, (event) =>
+            invokeNext(event, list)
+          );
         });
       });
     }
@@ -538,7 +532,10 @@ function activate(prefix = "atv") {
   }
 
   function updateControllers(root) {
-    let initialCount = Number(allControllers.get(prefix)?.size);
+    let initialCount = 0;
+    if (allControllers?.has(prefix)) {
+      initialCount = Number(allControllers.get(prefix).size);
+    }
     const elements = new Set();
     if (root.matches(controllersSelector)) {
       elements.add(root);
@@ -548,11 +545,13 @@ function activate(prefix = "atv") {
       .forEach((element) => elements.add(element));
     elements.forEach(registerControllers);
 
-    report(
-      allControllers.get(prefix).size - initialCount,
-      "controllers",
-      "found"
-    );
+    if (allControllers.has(prefix)) {
+      report(
+        allControllers.get(prefix).size - initialCount,
+        "controllers",
+        "found"
+      );
+    }
   }
 
   updateControllers(root);
