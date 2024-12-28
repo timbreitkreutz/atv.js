@@ -32,7 +32,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.1.8";
+const version = "0.1.9";
 
 // To dynamically load up the ATV javascripts if needed
 function importMap() {
