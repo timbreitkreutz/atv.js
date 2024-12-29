@@ -7,7 +7,7 @@ class DomTest < ApplicationSystemTestCase
     assert page.has_css?("#simple-controller")
 
     js = <<~JS
-      (function() { 
+      (function() {
         const controller = document.getElementById("simple-controller");
         controller.insertAdjacentHTML("beforeend", '<div data-atv-simple-target="here, new"></div>');
       })();
@@ -30,7 +30,7 @@ class DomTest < ApplicationSystemTestCase
 
   test "adding and removing multiples" do
     visit atv_by_example_path
-    
+
     page.evaluate_script <<~JS
       (function() {
         const controller = document.getElementById("connect2");
@@ -45,10 +45,8 @@ class DomTest < ApplicationSystemTestCase
       })();
     JS
     6.downto(1).each do |ii|
-
       result = page.evaluate_script(js)
       assert page.has_text?("Count Is: #{ii}")
-
     end
   end
 end

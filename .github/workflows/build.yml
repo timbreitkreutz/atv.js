@@ -41,7 +41,7 @@ jobs:
           working-directory: ./atv-test          
       - name: Generate binstubs
         working-directory: ./atv-test
-        run: bundle binstubs bundler-audit brakeman rubocop
+        run: bundle binstubs rubocop
       - name: Lint Ruby files
         working-directory: ./atv-test
         run: bin/rubocop --parallel
