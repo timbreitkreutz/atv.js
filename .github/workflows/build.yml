@@ -27,7 +27,7 @@ jobs:
       # Add or replace test runners here
       - name: Run tests
         working-directory: ./atv-test
-        run: bin/rails test
+        run: bin/rails test:system
 
   lint:
     runs-on: ubuntu-latest
