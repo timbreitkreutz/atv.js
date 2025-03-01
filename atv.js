@@ -32,7 +32,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.1.9";
+const version = "0.1.10";
 
 // To dynamically load up the ATV javascripts if needed
 function importMap() {
@@ -233,6 +233,8 @@ function attributesFor(element, type) {
 const allControllerNames = new Set();
 const allTargets = new Map();
 let allControllers = new Map();
+let allHandlers = new Map();
+let allEvents = new Set();
 
 // The three maps above all have the same structure: prefix
 // first (atv, etc.), then element, then a Map of those things.
@@ -320,6 +322,32 @@ function activate(prefix = "atv") {
     );
   }
 
+  function registerHandler(element, eventName, controllerName, handler) {
+    allEvents.add(eventName);
+    if (!allHandlers.get(element)) {
+      allHandlers.set(element, new Map());
+    }
+    const identifier = `${eventName}/${controllerName}`;
+    let elementHandlers = allHandlers.get(element);
+    elementHandlers.set(identifier, handler);
+  }
+
+  function unregisterHandler(element, controllerName) {
+    let elementHandlers = allHandlers?.get(element);
+    if (elementHandlers) {
+      allEvents.forEach(function (eventName) {
+        const identifier = `${eventName}/${controllerName}`;
+        elementHandlers.delete(identifier);
+      });
+    }
+  }
+
+  function handlerFor(element, eventName, controllerName) {
+    const identifier = `${eventName}/${controllerName}`;
+
+    return allHandlers.get(element)?.get(identifier);
+  }
+
   /* ----------------- Controller Factory ------------------ */
 
   function createController(root, name) {
@@ -385,9 +413,11 @@ function activate(prefix = "atv") {
             }
             return invokeNext(event, actions.slice(1));
           }
-          element.addEventListener(eventName, (event) =>
-            invokeNext(event, list)
-          );
+          if (!handlerFor(element, eventName, name)) {
+            const handler = (event) => invokeNext(event, list);
+            element.addEventListener(eventName, handler);
+            registerHandler(element, eventName, name, handler);
+          }
         });
       });
     }
@@ -604,6 +634,7 @@ function activate(prefix = "atv") {
             if (disconnect) {
               disconnect();
             }
+            unregisterHandler(element, controller.name);
           });
           allControllers.get(prefix).delete(element);
         }
