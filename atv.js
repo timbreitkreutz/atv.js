@@ -12,7 +12,7 @@
 
 // The MIT License (MIT)
 
-// Copyright (c) 2024 Timothy Breitkreutz
+// Copyright (c) 2024-2025 Timothy Breitkreutz
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
