@@ -56,7 +56,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     mButton = find("#multi-button")
     assert mButton.has_text? "Count 0"
     mButton.click
-    assert mButton.matches_style?("background-color" => "rgb(0, 0, 255)")
+    assert_equal "rgb(0, 0, 255)",  clean_color(mButton)
     assert mButton.has_text? "Count 1"
 
     eButtton = find("#e-count")

@@ -9,6 +9,7 @@ class VariationsTest < ApplicationSystemTestCase
       button.click
       assert_equal "Count 1", button.text
     end
+
     page.all(".multi-button-1").each do |button|
       assert_equal "Count 1", button.text
       button.click
@@ -17,33 +18,34 @@ class VariationsTest < ApplicationSystemTestCase
 
     page.all(".multi-button-2").each do |button|
       assert_equal "Count 0", button.text
-      assert_equal "rgb(0, 128, 0)", button.style("background-color").values.first
+      assert_equal "rgb(0, 128, 0)",  clean_color(button)
       button.click
       assert_equal "Count 3", button.text
-      assert_equal "rgb(0, 0, 255)", button.style("background-color").values.first
+      assert_equal "rgb(0, 0, 255)", clean_color(button)
     end
+
     page.all(".multi-button-2").each do |button|
       assert_equal "Count 3", button.text
-      assert_equal "rgb(0, 0, 255)", button.style("background-color").values.first
+      assert_equal "rgb(0, 0, 255)", clean_color(button)
       button.click
       assert_equal "Count 4", button.text
-      assert_equal "rgb(0, 128, 0)", button.style("background-color").values.first
+      assert_equal "rgb(0, 128, 0)", clean_color(button)
     end
 
     page.all(".multi-button-3").each do |button|
       assert_equal "Count 0", button.text
-      assert_equal "rgb(0, 128, 0)", button.style("background-color").values.first
+      assert_equal "rgb(0, 128, 0)", clean_color(button)
       button.click
       assert_equal "Count 5", button.text
-      assert_equal "rgb(0, 0, 255)", button.style("background-color").values.first
+      assert_equal "rgb(0, 0, 255)", clean_color(button)
     end
 
     page.all(".multi-button-3").each do |button|
       assert_equal "Count 5", button.text
-      assert_equal "rgb(0, 0, 255)", button.style("background-color").values.first
+      assert_equal "rgb(0, 0, 255)", clean_color(button)
       button.click
       assert_equal "Count 6", button.text
-      assert_equal "rgb(0, 128, 0)", button.style("background-color").values.first
+      assert_equal "rgb(0, 128, 0)", clean_color(button)
     end
   end
 end

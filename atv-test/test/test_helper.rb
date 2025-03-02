@@ -11,6 +11,9 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    # Because chrome and firefox are different
+    def clean_color(button)
+      button.style("background-color").values.first.sub("rgba", "rgb").sub(/, 1\)$/, ")")
+    end
   end
 end
