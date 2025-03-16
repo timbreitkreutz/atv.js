@@ -5,7 +5,6 @@ function connect(targets, _values, root) {
   }
 
   function multi() {
-    console.log("multi", targets.multis)
     if (targets.multiCount) {
       targets.multiCount.innerText = targets.allMulti.length;
     }
