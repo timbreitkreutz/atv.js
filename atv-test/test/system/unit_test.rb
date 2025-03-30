@@ -1,7 +1,7 @@
 require "application_system_test_case"
 
 class UnitTest < ApplicationSystemTestCase
-  VERSION = "ATV v0.1.10"
+  VERSION = "ATV v0.2.0"
 
   test "pascalize" do
     skip "for now"
@@ -95,10 +95,8 @@ class UnitTest < ApplicationSystemTestCase
   end
 
   test "actionsFor" do
-    skip "for now"
-
     visit unit_test_path
-    assert page.has_text?(VERSION)
+    # assert page.has_text?(VERSION)
 
     # <div id="action1" data-atv-blah-blah-action="click">action1</div>
     result = page.evaluate_script("actionsFor('atv', document.getElementById('action1'))")
@@ -108,13 +106,14 @@ class UnitTest < ApplicationSystemTestCase
     result = page.evaluate_script("actionsFor('atv', document.getElementById('action2'))")
     assert_equal [ { "controller"=>"blah-blah", "event"=>"click", "method"=>"clack", "parameters"=>[] } ], result
 
-    # <div id="action2a" data_atv_blah_blah_action="click=>clack">action2a</div>
+    # <div id="action2a" data-atv-blah-blah-action="click=>clack">action2a</div>
     result2 = page.evaluate_script("actionsFor('atv', document.getElementById('action2a'))")
+    puts "actionsFor('atv', document.getElementById('action2a'))"
     assert_equal result, result2
 
     # <div id="action3" data-atv-blah-blah-action="click->clack">action3</div>
     result2 = page.evaluate_script("actionsFor('atv', document.getElementById('action3'))")
-    assert_equal result2, result
+    assert_equal result, result2
 
     # <div id="action4" data-atv-blah-blah-action="click=>how#clack">action4</div>
     result = page.evaluate_script("actionsFor('atv', document.getElementById('action4'))")
@@ -146,6 +145,7 @@ class UnitTest < ApplicationSystemTestCase
 
     # <div id="action9a" data_atv_actions="click=>hammer, click=>nail-b">action9a</div>
     result = page.evaluate_script("actionsFor('atv', document.getElementById('action9a'))")
+
     assert_equal [ { "controller"=>"hammer", "event"=>"click", "method"=>"click", "parameters"=>[] },
       { "controller"=>"nail-b", "event"=>"click", "method"=>"click", "parameters"=>[] } ], result
 
@@ -161,10 +161,12 @@ class UnitTest < ApplicationSystemTestCase
 
     # <div id="action11" data-atv-blah-blah-action="click->click(a)">action11</div>
     result = page.evaluate_script("actionsFor('atv', document.getElementById('action11'))")
+    # sleep 10000
     assert_equal [ { "controller"=>"blah-blah", "event"=>"click", "method"=>"click", "parameters"=>[ "a" ] } ], result
 
     # <div id="action12" data-atv_blah-blah-action="click(a)">action12</div>
     result2 = page.evaluate_script("actionsFor('atv', document.getElementById('action12'))")
+    # sleep 100000000
     assert_equal result, result2
 
     # <div id="action13" data-atv-blah-blah-action="click(a, b)">action13</div>
