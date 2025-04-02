@@ -93,8 +93,7 @@ function registerHandler(element, eventName) {
 // CONTROLLERS
 
 function createApplication(prefix) {
-  let data = `data-${prefix}`;
-  data = data.replace(/-$/, "");
+  let dataPrefix = `data-${prefix}`.replace(/-$/, "");
   const root = document.body;
   let controllerNames = new Set();
   let actionSelector;
@@ -102,7 +101,7 @@ function createApplication(prefix) {
   // Gather all controllers from the importmap and add their names
   // to the action finder selector
   function initializeControllers() {
-    let actionSelectors = [`[${data}-action]`, `[${data}-actions]`];
+    let actionSelectors = [`[${dataPrefix}-action]`, `[${dataPrefix}-actions]`];
 
     const matcher = new RegExp(`^controllers\/(.*)[_-]?${prefix}$`);
     Object.keys(importMap()).forEach(function (key) {
@@ -112,9 +111,11 @@ function createApplication(prefix) {
           .replace(/[_\-]$/, "")
           .split("/")
           .join("--")
-          .replace("_", "-");
-        actionSelectors.push(`[${data}-${name}-action]`);
-        actionSelectors.push(`[${data}-${name}-actions]`);
+          .replace("_", "-")
+          .replace(/-atv$/, "");
+        console.log(`)))))))))${name}`)
+        actionSelectors.push(`[${dataPrefix}-${name}-action]`);
+        actionSelectors.push(`[${dataPrefix}-${name}-actions]`);
         controllerNames.add(name);
       }
     });
@@ -123,36 +124,22 @@ function createApplication(prefix) {
     console.log(`ACTION SELECTOR is ${actionSelector}`);
   }
 
-  // For a given element and dataset entry, look for an event
-  // listener and set one up if necessary
-  function registerElementEvent(element, datum) {
-    const definition = element.dataset[datum];
-    let eventName = definition;
-    if (/[=\-]>/.test(definition)) {
-      eventName = definition.split(/[\-=]>/)[0];
-    }
-    if (!allSystemEventNames.has(eventName)) {
-      console.warn(`Unknown event name: ${eventName}, assuming 'click'`);
-      eventName = "click";
-    }
-    console.log(`register ${eventName} ${element}`);
-    registerHandler(element, eventName);
-  }
-
   function registerEvents(element) {
-    Object.keys(element.dataset).forEach(function (datum) {
-      if (/Actions?$/.test(datum)) {
-        registerElementEvent(element, datum);
-      }
+    const actions = actionsFor(prefix, element);
+    const events = new Set(actions.map((action) => action.event));
+    events.forEach(function(event) {
+      registerHandler(element, event);
     });
   }
 
   // Look for all actions within the element and its children
   function initializeActors(root) {
+    console.log(`INITIALIZE ACTORS ${actionSelector}`)
     root.querySelectorAll(actionSelector).forEach(registerEvents);
   }
 
   const observerCallback = function (mutationList) {
+    console.log("MUTATION")
     let actionAttributeChanged = new Set();
     let newChildren = new Set();
 
@@ -160,10 +147,12 @@ function createApplication(prefix) {
       const element = mutation.target;
       if (mutation.type === "childList") {
         if (element.querySelector(actionSelector)) {
+          console.log("NEW CHILDREN")
           newChildren.add(element);
         }
       } else if (mutation.type === "attributes") {
-        if (mutation.attributeName.startsWith(data)) {
+        if (mutation.attributeName.startsWith(dataPrefix)) {
+          console.log("ATTRIBUTE CHANGED")
           actionAttributeChanged.add(element);
         }
       }
@@ -175,9 +164,8 @@ function createApplication(prefix) {
   const observer = new MutationObserver(observerCallback);
 
   window.addEventListener("load", function () {
-    observer.observe(root, {
+    observer.observe(document.body, {
       attributes: true,
-      characterData: false,
       childList: true,
       subtree: true
     });
@@ -187,6 +175,8 @@ function createApplication(prefix) {
     console.log(`Application ${prefix} handling ${eventName}`);
     console.log(element);
     console.log(event);
+    const allActions = actionsFor(prefix, element);
+    console.log(allActions);
   }
 
   function refresh() {
