@@ -1,3 +1,4 @@
+/*jslint white*/
 import { controllerFor } from "atv/controller-manager";
 import { dataPrefix } from "atv/utilities";
 import { parseActions } from "atv/action-parser";
@@ -56,4 +57,4 @@ function act(prefix, element, incomingEventName, event) {
   });
 }
 
-export { act, distinctEventNamesFor, actionSequence };
+export { act, actionSequence, distinctEventNamesFor };

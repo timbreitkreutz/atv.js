@@ -1,3 +1,4 @@
+/*jslint white*/
 import { functionify } from "atv/utilities";
 
 const allStateMaps = {};
@@ -16,21 +17,22 @@ function stateMap(name) {
   // A la Picard
   function engage(map, keyParams, action, value = undefined) {
     if (keyParams.length === 0) {
-      console.error("state map error");
       return undefined;
     }
     const firstKey = keyParams[0];
     if (keyParams.length === 1) {
-      switch(action) {
-      case DESTROY:
-        map.delete(firstKey);
-        break;
-      case INITIALIZE:
-        if (map.has(firstKey)) {
+      switch (action) {
+        case DESTROY:
+          map.delete(firstKey);
           break;
-        }
-      case SET:
-        map.set(firstKey, functionify(value));
+        case INITIALIZE:
+          if (!map.has(firstKey)) {
+            map.set(firstKey, functionify(value));
+          }
+          break;
+        case SET:
+          map.set(firstKey, functionify(value));
+          break;
       }
       return map.get(firstKey);
     }
@@ -57,10 +59,12 @@ function stateMap(name) {
   }
 
   return {
+    destroy,
+    get,
+    initialize,
     map: myStateMap,
-    initialize, set, get, destroy
-  }
+    set
+  };
 }
 
 export { stateMap };
-

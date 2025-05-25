@@ -1,3 +1,4 @@
+/*jslint white*/
 import { distinctEventNamesFor, act } from "atv/action";
 import { allActionElements } from "atv/element-finder";
 

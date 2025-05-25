@@ -1,4 +1,4 @@
-import { controllerFor } from "atv/controller-manager";
+/*jslint white*/
 import { outOfScope, friendlySelector } from "atv/element-finder";
 import { pluralize } from "atv/pluralize";
 
@@ -12,7 +12,10 @@ const selectors = {};
 function refreshTargets(controllerManager, rootElement, targets) {
   const controllerName = controllerManager.controllerName;
   const prefix = controllerManager.prefix;
-  const matcherKey = prefix ? `${prefix}-${controllerName}` : controllerName;
+  let matcherKey = controllerName;
+  if (prefix) {
+    matcherKey = `${prefix}-${controllerName}`;
+  }
 
   function dataMatcher() {
     if (!matchers[matcherKey]) {
@@ -32,18 +35,12 @@ function refreshTargets(controllerManager, rootElement, targets) {
     }
     return selectors[matcherKey];
   }
-  
-  Object.keys(targets).forEach((key) => delete targets[key]);
+
+  Object.keys(targets).forEach(function (key) {
+    delete targets[key];
+  });
 
   function updateTargets(element) {
-    function notifyController(key, element) {
-      const controller = controllerFor(prefix, controllerName, element);
-      if (!controller) {
-        return;
-      }
-      const notifiedKey = `${prefix}--${controllerName}--${key}`;
-      notifyTarget(controller, element, key, notifiedKey);
-    }
     if (outOfScope(element, rootElement, controllerName, prefix)) {
       return;
     }
@@ -56,7 +53,9 @@ function refreshTargets(controllerManager, rootElement, targets) {
             return;
           }
           targets[key] = element;
-          targets[pluralKey] ||= [];
+          if (!targets[pluralKey]) {
+            targets[pluralKey] = [];
+          }
           targets[pluralKey].push(element);
         });
       }

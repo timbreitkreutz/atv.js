@@ -1,20 +1,22 @@
+/*jslint white, for*/
+
 // Pluralizer inspired by ActiveSupport inflections
 
 // Used for target lists, assuming all targets will be lower case
 
 const irregularMap = {
   child: "children",
-  man: "men",
-  person: "people",
-  quiz: "quizzes",
-  ox: "oxen",
-  mouse: "mice",
-  louse: "lice",
-  vertex: "vertices",
-  matrix: "matrices",
   index: "indices",
+  louse: "lice",
+  man: "men",
+  matrix: "matrices",
+  mouse: "mice",
+  ox: "oxen",
+  person: "people",
+  potato: "potatoes",
+  quiz: "quizzes",
   tomato: "tomatoes",
-  potato: "potatoes"
+  vertex: "vertices"
 };
 
 const replacements = [
@@ -33,7 +35,8 @@ function pluralize(word) {
   if (irregularMap[word]) {
     return irregularMap[word];
   }
-  for (let ii = 0; ii < replacements.length; ii += 1) {
+  let ii;
+  for (ii = 0; ii < replacements.length; ii += 1) {
     const [pattern, replacement] = replacements[ii];
     if (pattern.test(word)) {
       return word.replace(pattern, replacement);

@@ -1,3 +1,5 @@
+/*jslint white*/
+/*global document, console, MutationObserver */
 import { allControllerElements, controllerSelector } from "atv/element-finder";
 import { createController } from "atv/controller";
 import { refreshEvents } from "atv/event";
@@ -36,14 +38,15 @@ function createControllerManager(prefix) {
     });
   }
 
-  // This public function receives a set of ES6 modules from the importmap loader
+  // This public function receives a set of ES6 modules from
+  // the importmap loader
   function refresh(moduleDefinitions) {
     function refreshModule({ controllerName, module, version }) {
       const manager = managers[controllerName];
       if (!manager || manager.version !== version) {
         const staleControllers = manager?.controllers;
         if (staleControllers) {
-          staleControllers.forEach((controller) => {
+          staleControllers.forEach(function (controller) {
             controller.disconnect();
           });
         }
@@ -73,10 +76,7 @@ function createControllerManager(prefix) {
           return;
         }
         let controller = manager.controllers.get(element);
-        if (
-          !controller ||
-          controller.__atvControllerVersion !== manager.version
-        ) {
+        if (!controller || controller.xxxModuleVersion !== manager.version) {
           if (controller?.disconnect) {
             controller.disconnect();
             controller = undefined;
@@ -116,7 +116,7 @@ function createControllerManager(prefix) {
       });
     }
 
-    function refreshApplication(mutationList) {
+    function refreshApplication() {
       addOrUpdateControllers();
       refreshEvents(prefix);
     }
@@ -127,8 +127,8 @@ function createControllerManager(prefix) {
       }
       watchingDom = true;
       const observer = new MutationObserver(refreshApplication);
-      observer.observe(document.body, { subtree: true, childList: true });
-      document.documentElement.addEventListener("turbo:load", () => {
+      observer.observe(document.body, { childList: true, subtree: true });
+      document.documentElement.addEventListener("turbo:load", function () {
         refreshApplication();
         watchingDom = false;
         setupDomWatcher();
@@ -139,9 +139,7 @@ function createControllerManager(prefix) {
     refreshApplication();
     setupDomWatcher();
   }
-  return {
-    refresh: refresh
-  };
+  return { refresh };
 }
 
 // Find the container contrller by prefix and name for element
@@ -154,8 +152,7 @@ function controllerFor(prefix, controllerName, element) {
   if (controllerMap && controllerMap[key]) {
     return controllerMap[key];
   }
-  window.allControllers = allControllers;
   return controllerFor(prefix, controllerName, element.parentNode);
 }
 
-export { createControllerManager, controllerFor };
+export { controllerFor, createControllerManager };

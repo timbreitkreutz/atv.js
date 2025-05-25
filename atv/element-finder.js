@@ -1,10 +1,16 @@
-import { attributesFor, dasherize, deCommaPattern, variantPattern } from "atv/utilities";
+/*jslint white*/
+/*global document*/
+import { attributesFor, dasherize, deCommaPattern } from "atv/utilities";
 import { allControllerNames } from "atv/importmap";
 
 // ATVs selector logic
 
 function rawSelector(prefix, type) {
-  return ["data-", prefix ? `${prefix}-` : "", type].join("");
+  let dashPrefix = "";
+  if (prefix) {
+    dashPrefix = `${prefix}-`;
+  }
+  return ["data-", dashPrefix, type].join("");
 }
 
 function allControllerElements(prefix) {
@@ -76,6 +82,9 @@ function outOfScope(element, rootElement, controllerName, prefix) {
   return out;
 }
 
+const variantRegex = new RegExp("([^_-]+)[-_]?(.*)");
+const startRegex = new RegExp("^[-_]");
+
 function allVariants(selector) {
   if (!selector) {
     return [];
@@ -83,7 +92,7 @@ function allVariants(selector) {
   const variants = new Set();
   function addVariants(prefix, remainder) {
     if (remainder) {
-      const match = remainder.match(/([^_-]+)[-_]?(.*)/);
+      const match = remainder.match(variantRegex);
       if (match) {
         const first = match[1];
         const rest = match[2];
@@ -92,7 +101,7 @@ function allVariants(selector) {
         return;
       }
     }
-    const result = prefix.replace(/^[-_]/, "");
+    const result = prefix.replace(startRegex, "");
     variants.add(result);
     variants.add(`${result}s`);
   }

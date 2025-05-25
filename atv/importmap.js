@@ -1,9 +1,12 @@
+/*jslint white*/
+/*global document, MutationObserver*/
 import { underscore } from "atv/utilities";
 
 // ATV/importmap
 //
-// Responsible for finding all the available ATV controllers in the importmaps
-// Also provides a global list of all controller type names
+// Responsible for finding all the available ATV controllers
+// in the importmaps. Also provides a global list of all
+// controller type names
 
 const importMapSelector = "script[type='importmap']";
 const allControllerNames = new Set();
@@ -13,10 +16,10 @@ function importMap() {
     .imports;
 }
 
-// This method is called first upon activation (booting) of ATV for a given prefix.
-// The callback receives a set of fully instantiated ES6 modules and will complete
-// initialization.
-function loadImportmap(prefix, complete) {
+// This method is called first upon activation (booting) of ATV
+// for a given prefix. The callback receives a set of fully
+// instantiated ES6 modules and will complete initialization.
+function loadImportmap(complete) {
   const importMapper = new RegExp(`^controllers\/(.*)[-_]atv$`);
   const moduleDefinitions = [];
 
@@ -56,12 +59,10 @@ function loadImportmap(prefix, complete) {
 
   // This watcher is just for the importmap header script itself.
   function setupDomWatcher() {
-    const observer = new MutationObserver(() => {
-      reloadModules();
-    });
+    const observer = new MutationObserver(reloadModules);
     observer.observe(document.querySelector(importMapSelector), {
-      subtree: true,
-      childList: true
+      childList: true,
+      subtree: true
     });
   }
 
@@ -69,4 +70,4 @@ function loadImportmap(prefix, complete) {
   setupDomWatcher();
 }
 
-export { loadImportmap, allControllerNames };
+export { allControllerNames, loadImportmap };

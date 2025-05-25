@@ -1,4 +1,4 @@
-const dashUnderscore = new RegExp("[_\\-]$", "g");
+/*jslint white*/
 const deCommaPattern = /,[\s+]/;
 const endsWithAtv = new RegExp("/-atv$/");
 const isNumber = new RegExp("^-?\\d*[.]?\\d+$");
@@ -7,12 +7,10 @@ const isWord = new RegExp("\\w+");
 const underscore = new RegExp("[_]", "g");
 const variantPattern = /[\-_]/;
 
-function dasherize(string) {
-  return string.replace(/_/g, "-");
-}
-
-function capitalize(word) {
-  return word.charAt(0).toUpperCase() + word.slice(1);
+function attributesFor(element, type) {
+  return attributeKeysFor(element, type).map(function (name) {
+    return element.getAttribute(name);
+  });
 }
 
 function attributeKeysFor(element, type) {
@@ -23,10 +21,12 @@ function attributeKeysFor(element, type) {
   return element.getAttributeNames().filter((name) => regex.test(name));
 }
 
-function attributesFor(element, type) {
-  return attributeKeysFor(element, type).map((name) =>
-    element.getAttribute(name)
-  );
+function capitalize(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+function dasherize(string) {
+  return string.replace(/_/g, "-");
 }
 
 function dataPrefix(prefix) {
@@ -34,16 +34,6 @@ function dataPrefix(prefix) {
     return `data-${prefix}`;
   }
   return "data";
-}
-
-function debounce(func, timeout = 300) {
-  let timer;
-  return function(...args) {
-    clearTimeout(timer);
-    timer = setTimeout(function () { 
-      func(...args); 
-    }, timeout);
-  };
 }
 
 function functionify(value) {
@@ -56,10 +46,8 @@ function functionify(value) {
 export {
   attributesFor,
   capitalize,
-  dashUnderscore,
   dasherize,
   dataPrefix,
-  debounce,
   deCommaPattern,
   endsWithAtv,
   functionify,

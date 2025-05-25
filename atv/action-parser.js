@@ -1,3 +1,5 @@
+/*jslint white*/
+/*global console*/
 // A recursive-descent parser for ATV acions
 
 import { isNumber, isQuote, isWord, underscore } from "atv/utilities";

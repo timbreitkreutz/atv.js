@@ -1,8 +1,10 @@
+/*jslint white*/
 // ATV/value
 //
 // Represents a value for a given controller.
 
 const matchers = {};
+const valueRegex = /values?/;
 
 function refreshValues(controllerManager, element, values) {
   const controllerName = controllerManager.controllerName;
@@ -22,10 +24,12 @@ function refreshValues(controllerManager, element, values) {
   }
 
   // Must preserve the original "values" object here.
-  Object.keys(values).forEach((key) => delete values[key]);
+  Object.keys(values).forEach(function (key) {
+    delete values[key];
+  });
   element.getAttributeNames().forEach(function (attributeName) {
     if (dataMatcher().test(attributeName)) {
-      if (!/values?/.test(attributeName)) {
+      if (!valueRegex.test(attributeName)) {
         return;
       }
       const value = element.getAttribute(attributeName);
@@ -35,7 +39,9 @@ function refreshValues(controllerManager, element, values) {
       } else {
         parsed = JSON.parse(`{${value}}`);
       }
-      Object.keys(parsed).forEach((key) => (values[key] = parsed[key]));
+      Object.keys(parsed).forEach(function (key) {
+        values[key] = parsed[key];
+      });
     }
   });
 }

@@ -1,3 +1,4 @@
+/*jslint white*/
 import { refreshTargets } from "atv/target";
 import { refreshValues } from "atv/value";
 import { functionify } from "atv/utilities";
@@ -10,7 +11,7 @@ import { functionify } from "atv/utilities";
 function createController(controllerManager, element) {
   const targets = {}; // Exposed to ATV controller code
   const values = {}; // Exposed to ATV controller code
-  const {prefix, controllerName} = controllerManager;
+  const prefix = controllerManager.prefix;
 
   // Used to update controllers if importmap is changed to a new cache name
   const controller = {
@@ -39,6 +40,7 @@ function createController(controllerManager, element) {
     controllerManager.outlets
   );
   controller.actions = functionify(result);
+
   return controller;
 }
 

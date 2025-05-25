@@ -44,7 +44,7 @@ function createApplication(prefix) {
   const manager = createControllerManager(prefix);
 
   application.activate = function () {
-    loadImportmap(prefix, manager.refresh);
+    loadImportmap(manager.refresh);
   };
 
   return application;
@@ -54,7 +54,7 @@ const applications = stateMap("applications");
 
 function activate(prefix = "atv") {
   prefix = `${prefix}`;
-  applications.initialize(prefix, function() {
+  applications.initialize(prefix, function () {
     const application = createApplication(prefix);
     application.activate();
     return application;
