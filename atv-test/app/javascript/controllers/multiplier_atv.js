@@ -3,7 +3,7 @@ function connect(targets) {
   return {
     multiply: function() {
       let product = 1;
-      targets.allAFactor.forEach((factor) => {
+      targets.aFactors.forEach((factor) => {
         if (factor.value) {
           product *= factor.value;
         } else {

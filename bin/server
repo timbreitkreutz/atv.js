@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cd atv-test
-while true; do bundle; bin/rails assets:clobber; bin/rails assets:precompile; bin/rails s; done
+while true; do bundle; bin/rails assets:clobber; bin/rails s; done

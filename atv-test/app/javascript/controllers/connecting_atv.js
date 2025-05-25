@@ -6,7 +6,7 @@ function connect(targets, _values, root) {
 
   function multi() {
     if (targets.multiCount) {
-      targets.multiCount.innerText = targets.allMulti.length;
+      targets.multiCount.innerText = targets.multis.length;
     }
   }
 

@@ -1,20 +1,20 @@
 require "application_system_test_case"
 
 class VariationsTest < ApplicationSystemTestCase
-  test "counters are independent" do
-    skip "for now"
-
+  test "finders" do
     visit atv_variations_path
 
     page.all(".multi-button-1").each do |button|
       assert_equal "Count 0", button.text
       button.click
+      sleep 1
       assert_equal "Count 1", button.text
     end
 
     page.all(".multi-button-1").each do |button|
       assert_equal "Count 1", button.text
       button.click
+      sleep 1
       assert_equal "Count 2", button.text
     end
 
@@ -22,6 +22,7 @@ class VariationsTest < ApplicationSystemTestCase
       assert_equal "Count 0", button.text
       assert_equal "rgb(0, 128, 0)",  clean_color(button)
       button.click
+      sleep 1
       assert_equal "Count 3", button.text
       assert_equal "rgb(0, 0, 255)", clean_color(button)
     end
@@ -30,6 +31,7 @@ class VariationsTest < ApplicationSystemTestCase
       assert_equal "Count 3", button.text
       assert_equal "rgb(0, 0, 255)", clean_color(button)
       button.click
+      sleep 1
       assert_equal "Count 4", button.text
       assert_equal "rgb(0, 128, 0)", clean_color(button)
     end
@@ -38,6 +40,7 @@ class VariationsTest < ApplicationSystemTestCase
       assert_equal "Count 0", button.text
       assert_equal "rgb(0, 128, 0)", clean_color(button)
       button.click
+      sleep 1
       assert_equal "Count 5", button.text
       assert_equal "rgb(0, 0, 255)", clean_color(button)
     end
@@ -46,6 +49,7 @@ class VariationsTest < ApplicationSystemTestCase
       assert_equal "Count 5", button.text
       assert_equal "rgb(0, 0, 255)", clean_color(button)
       button.click
+      sleep 1
       assert_equal "Count 6", button.text
       assert_equal "rgb(0, 128, 0)", clean_color(button)
     end

@@ -3,11 +3,14 @@
 <h1>Unit Tests</h1>
 
 <script type="module">
-import { version, actionsFor } from "atv-test";
-// window.pascalize = pascalize;
-// window.dasherize = dasherize;
-// window.allVariants = allVariants;
-window.actionsFor = actionsFor;
+import { version} from "atv";
+import { actionSequence } from "atv/action";
+import { dasherize } from "atv/utilities"
+import { allVariants } from "atv/element-finder"
+
+window.dasherize = dasherize;
+window.allVariants = allVariants;
+window.actionSequence = actionSequence;
 
 document.getElementById("version").innerText = version;
 

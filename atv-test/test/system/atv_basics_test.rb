@@ -2,12 +2,12 @@ require "application_system_test_case"
 
 class AtvBasicsTest < ApplicationSystemTestCase
   test "counters are independent" do
-    skip "for now"
     visit atv_by_example_path
 
     aCount = page.find("#aCount")
     assert aCount.has_text? "Count 0"
     aCount.click
+    sleep 1
     assert aCount.has_text? "Count 1"
 
     mCount = page.find("#mCount")
@@ -92,8 +92,6 @@ class AtvBasicsTest < ApplicationSystemTestCase
   end
 
   test "greeting" do
-    skip "for now"
-
     visit atv_by_example_path
     name = "Test User #{rand(100)}"
     find("#greet-input").set(name)
@@ -102,8 +100,6 @@ class AtvBasicsTest < ApplicationSystemTestCase
   end
 
   test "values and different naming styles" do
-    skip "for now"
-
     visit atv_by_example_path
     output = find("#config-out1")
     assert_not output.has_text?("blue")
@@ -124,8 +120,6 @@ class AtvBasicsTest < ApplicationSystemTestCase
   end
 
   test "targets" do
-    skip "for now"
-
     visit atv_by_example_path
     output = find("span#multiply-out")
     assert_not output.has_text?("60")
@@ -139,8 +133,6 @@ class AtvBasicsTest < ApplicationSystemTestCase
   end
 
   test "outlets" do
-    skip "for now"
-
     visit atv_by_example_path
     output = find("#inter-out")
     assert_not output.has_text?("14")
@@ -149,8 +141,6 @@ class AtvBasicsTest < ApplicationSystemTestCase
   end
 
   test "events" do
-    skip "for now"
-
     visit atv_by_example_path
     input = find("#name")
     input.native.send_keys("ab5533aa")
@@ -158,8 +148,6 @@ class AtvBasicsTest < ApplicationSystemTestCase
   end
 
   test "sequence" do
-    skip "for now"
-
     visit atv_by_example_path
     button = find("#f-button")
     extra = find("#multi-out")
@@ -179,13 +167,12 @@ class AtvBasicsTest < ApplicationSystemTestCase
   end
 
   test "adding elements" do
-    skip "for now"
-
     visit atv_by_example_path
 
     aCount = page.find("#aCount")
     assert aCount.has_text? "Count 0"
     aCount.click
+    sleep 1
     assert aCount.has_text? "Count 1"
 
     assert page.has_text?("Connected", count: 4)
@@ -207,13 +194,12 @@ class AtvBasicsTest < ApplicationSystemTestCase
   end
 
   test "removing elements" do
-    skip "for now"
-
     visit atv_by_example_path
 
     aCount = page.find("#aCount")
     assert aCount.has_text? "Count 0"
     aCount.click
+    sleep 1
     assert aCount.has_text? "Count 1"
 
     # Disconnect
@@ -222,6 +208,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     assert page.has_text?("Disconnect", count: 2)
     assert_not page.has_text?("Disconnected")
     disconnect_button.click
+
     assert page.has_text?("Disconnect", count: 2)
     assert page.has_text?("Disconnected")
     input = find("#name")

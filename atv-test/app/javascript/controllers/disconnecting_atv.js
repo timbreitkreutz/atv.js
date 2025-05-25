@@ -1,12 +1,13 @@
 function connect(_targets, values, root) {
   return function() {
+    const id = Math.random();
     const messageSpan = document.getElementById(values.spanId);
     if (messageSpan) {
       if (values.spanId === "disconnected-state-2") {
-        messageSpan.innerText = "Connected 2";
+        messageSpan.innerText = `Connected ${id}`;
         messageSpan.style.color = "red";
       } else {
-        messageSpan.innerText = "Connected 1";
+        messageSpan.innerText = `Connected ${id}`;
         messageSpan.style.color = "blue";
       }
     }
@@ -16,6 +17,7 @@ function connect(_targets, values, root) {
         root.parentNode.removeChild(root);
       },
       disconnect: function() {
+        console.log(`disconnect ${id}`)
         messageSpan.innerText = "Disconnected";
         messageSpan.style.color = "black"
       }

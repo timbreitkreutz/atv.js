@@ -13,7 +13,12 @@ class DomTest < ApplicationSystemTestCase
         controller.insertAdjacentHTML("beforeend", '<div data-atv-simple-target="here, new"></div>');
       })();
     JS
+    puts "A"
+    sleep 20
     result = page.evaluate_script(js)
+    puts js
+    puts "B"
+    sleep 10000
     assert page.has_text?("Added New Target")
   end
 

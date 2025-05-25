@@ -20,8 +20,13 @@ function connect(targets) {
       window.target = target;
       target.innerHTML = "Added New Target";
     },
+    newTargetDisconnected: function(target) {
+      console.log("--------------NEW TargetDisconnected")
+      console.log(target);
+    },
     thereTargetConnected: (target) => console.log("THERE", target),
-    hereTargetConnected: (target) => console.log("HERE", target)
+    hereTargetConnected: (target) => console.log("HERE", target),
+    focus: () => console.log("FOCUS!")
   };
 }
 
