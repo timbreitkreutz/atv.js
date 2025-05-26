@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# for f in atv.js atv/*.js; do
-#   node jslint.mjs $f
+for f in atv.js atv/*.js; do
+  node jslint.mjs $f
 
-#   npx eslint $f || quit "Please fix eslint"
-#   npx prettier --trailing-comma none $f --write
-# done
+  npx eslint $f || quit "Please fix eslint"
+  npx prettier --trailing-comma none $f --write
+done
 
 # sed -e "s/activate, version/activate, version, pascalize, dasherize, allVariants, actionsFor/" atv.js > atv-test/app/javascript/atv-test.js
 # sed -e "s/activate, version/activate, version, actionsFor/" atv.js > atv-test/app/javascript/atv-test.js

@@ -1,6 +1,10 @@
 /*jslint white*/
 /*global document, console, MutationObserver */
-import { allControllerElements, controllerSelector } from "atv/element-finder";
+import {
+  allControllerElements,
+  controllerSelector,
+  friendlySelector
+} from "atv/element-finder";
 import { createController } from "atv/controller";
 import { refreshEvents } from "atv/event";
 
@@ -23,6 +27,11 @@ function createControllerManager(prefix) {
   const managers = {};
   let watchingDom = false;
 
+  let log = () => undefined;
+  if (document.querySelector(friendlySelector(`data-${prefix}-report`))) {
+    log = (message) => console.log(`ATV (${prefix}): ${message}`);
+  }
+
   // Find outlets (provided to atv controllers as fourth connect parameter)
   function outlets(selector, controllerName, callback) {
     document.querySelectorAll(selector).forEach(function (element) {
@@ -41,6 +50,8 @@ function createControllerManager(prefix) {
   // This public function receives a set of ES6 modules from
   // the importmap loader
   function refresh(moduleDefinitions) {
+    let controllerCount = 0;
+
     function refreshModule({ controllerName, module, version }) {
       const manager = managers[controllerName];
       if (!manager || manager.version !== version) {
@@ -76,27 +87,26 @@ function createControllerManager(prefix) {
           return;
         }
         let controller = manager.controllers.get(element);
-        if (!controller || controller.xxxModuleVersion !== manager.version) {
-          if (controller?.disconnect) {
-            controller.disconnect();
-            controller = undefined;
-          }
-          const key = elementKey(prefix, controllerName);
-          if (!controller) {
-            const newController = createController(manager, element);
-            manager.controllers.set(element, newController);
-            if (!allControllers.has(element)) {
-              allControllers.set(element, {});
-            }
-            if (!allControllers.get(element)[key]) {
-              allControllers.get(element)[key] = newController;
-            }
-          }
-          if (!liveList.has(element)) {
-            liveList.set(element, {});
-          }
-          liveList.get(element)[key] = true;
+        if (controller?.disconnect) {
+          controller.disconnect();
+          controller = undefined;
         }
+        const key = elementKey(prefix, controllerName);
+        if (!controller) {
+          const newController = createController(manager, element);
+          manager.controllers.set(element, newController);
+          if (!allControllers.has(element)) {
+            allControllers.set(element, {});
+          }
+          if (!allControllers.get(element)[key]) {
+            allControllers.get(element)[key] = newController;
+          }
+        }
+        if (!liveList.has(element)) {
+          liveList.set(element, {});
+        }
+        liveList.get(element)[key] = true;
+        controllerCount += 1;
       });
       allControllers.keys().forEach(function (element) {
         Object.keys(allControllers.get(element)).forEach(function (key) {
@@ -138,6 +148,8 @@ function createControllerManager(prefix) {
     moduleDefinitions.forEach(refreshModule);
     refreshApplication();
     setupDomWatcher();
+    const managerCount = Object.keys(managers).length;
+    log(`Activated: Managers: ${managerCount} Controllers: ${controllerCount}`);
   }
   return { refresh };
 }

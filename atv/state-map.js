@@ -12,57 +12,57 @@ function stateMap(name) {
   if (!allStateMaps[name]) {
     allStateMaps[name] = new Map();
   }
-  const myStateMap = allStateMaps[name];
+  const map = allStateMaps[name];
 
   // A la Picard
-  function engage(map, keyParams, action, value = undefined) {
-    if (keyParams.length === 0) {
+  function engage(theMap, params, action, value = undefined) {
+    if (params.length === 0) {
       return undefined;
     }
-    const firstKey = keyParams[0];
-    if (keyParams.length === 1) {
+    const firstKey = params[0];
+    if (params.length === 1) {
       switch (action) {
         case DESTROY:
-          map.delete(firstKey);
+          theMap.delete(firstKey);
           break;
         case INITIALIZE:
-          if (!map.has(firstKey)) {
-            map.set(firstKey, functionify(value));
+          if (!theMap.has(firstKey)) {
+            theMap.set(firstKey, functionify(value));
           }
           break;
         case SET:
-          map.set(firstKey, functionify(value));
+          theMap.set(firstKey, functionify(value));
           break;
       }
-      return map.get(firstKey);
+      return theMap.get(firstKey);
     }
-    if (!map.get(firstKey)) {
-      map.set(firstKey, new Map());
+    if (!theMap.get(firstKey)) {
+      theMap.set(firstKey, new Map());
     }
-    return engage(map.get(firstKey), keyParams.slice(1), action, value);
+    return engage(theMap.get(firstKey), params.slice(1), action, value);
   }
 
   function initialize(...params) {
-    return engage(myStateMap, params, INITIALIZE, params.pop());
+    return engage(map, params, INITIALIZE, params.pop());
   }
 
   function set(...params) {
-    return engage(myStateMap, params, SET, params.pop());
+    return engage(map, params, SET, params.pop());
   }
 
   function get(...params) {
-    return engage(myStateMap, params, GET);
+    return engage(map, params, GET);
   }
 
   function destroy(...params) {
-    return engage(myStateMap, params, DESTROY);
+    return engage(map, params, DESTROY);
   }
 
   return {
     destroy,
     get,
     initialize,
-    map: myStateMap,
+    map,
     set
   };
 }

@@ -46,6 +46,7 @@ function createApplication(prefix) {
   application.activate = function () {
     loadImportmap(manager.refresh);
   };
+  application.manager = manager;
 
   return application;
 }
