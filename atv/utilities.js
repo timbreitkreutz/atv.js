@@ -1,12 +1,12 @@
 /*jslint white*/
 
+// ATV Various Utilities
+
 const deCommaPattern = /,[\s+]/;
-const endsWithAtv = new RegExp("/-atv$/");
 const isNumber = new RegExp("^-?\\d*[.]?\\d+$");
 const isQuote = new RegExp("[\"']");
 const isWord = new RegExp("\\w+");
 const underscore = new RegExp("[_]", "g");
-const variantPattern = /[\-_]/;
 
 function attributesFor(element, type) {
   return attributeKeysFor(element, type).map(function (name) {
@@ -20,10 +20,6 @@ function attributeKeysFor(element, type) {
   }
   const regex = new RegExp(`${type}s?$`, "i");
   return element.getAttributeNames().filter((name) => regex.test(name));
-}
-
-function capitalize(word) {
-  return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 function dasherize(string) {
@@ -46,15 +42,12 @@ function functionify(value) {
 
 export {
   attributesFor,
-  capitalize,
   dasherize,
   dataPrefix,
   deCommaPattern,
-  endsWithAtv,
   functionify,
   isNumber,
   isQuote,
   isWord,
-  underscore,
-  variantPattern
+  underscore
 };

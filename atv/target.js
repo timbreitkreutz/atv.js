@@ -2,12 +2,12 @@
 import { outOfScope, friendlySelector } from "atv/element-finder";
 import { pluralize } from "atv/pluralize";
 
-// ATV/target
+// ATV Targets
 //
 // Responsible for keeping track of all the targets on the page
 
-const matchers = {};
-const selectors = {};
+const targetMatchers = {};
+const targetSelectors = {};
 
 function refreshTargets(controllerManager, rootElement, targets) {
   const controllerName = controllerManager.controllerName;
@@ -18,22 +18,24 @@ function refreshTargets(controllerManager, rootElement, targets) {
   }
 
   function dataMatcher() {
-    if (!matchers[matcherKey]) {
+    if (!targetMatchers[matcherKey]) {
       const friendlyName = controllerName.replace(/-/g, "[-_]");
       let parts = ["data[-_]", prefix];
       if (prefix) {
         parts.push(`[-_]${friendlyName}[-_]target[s]?`);
       }
-      matchers[matcherKey] = new RegExp(parts.join(""));
+      targetMatchers[matcherKey] = new RegExp(parts.join(""));
     }
-    return matchers[matcherKey];
+    return targetMatchers[matcherKey];
   }
 
   function dataSelector() {
-    if (!selectors[matcherKey]) {
-      selectors[matcherKey] = friendlySelector(`data-${matcherKey}-target`);
+    if (!targetSelectors[matcherKey]) {
+      targetSelectors[matcherKey] = friendlySelector(
+        `data-${matcherKey}-target`
+      );
     }
-    return selectors[matcherKey];
+    return targetSelectors[matcherKey];
   }
 
   Object.keys(targets).forEach(function (key) {

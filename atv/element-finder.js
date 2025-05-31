@@ -3,7 +3,9 @@
 import { attributesFor, dasherize, deCommaPattern } from "atv/utilities";
 import { allControllerNames } from "atv/importmap";
 
-// ATVs selector logic
+// ATV Element Finder
+//
+// Helpers to deal with finding things in the DOM
 
 function rawSelector(prefix, type) {
   let dashPrefix = "";

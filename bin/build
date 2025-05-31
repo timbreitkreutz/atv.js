@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# All the Lints!
 for f in atv.js atv/*.js; do
   node jslint.mjs $f
 
@@ -7,13 +8,21 @@ for f in atv.js atv/*.js; do
   npx prettier --trailing-comma none $f --write
 done
 
-# sed -e "s/activate, version/activate, version, pascalize, dasherize, allVariants, actionsFor/" atv.js > atv-test/app/javascript/atv-test.js
-# sed -e "s/activate, version/activate, version, actionsFor/" atv.js > atv-test/app/javascript/atv-test.js
-# echo "TEST VERSION:"
-# tail atv-test/app/javascript/atv-test.js
+# All the Tests!
 
-cd atv-test
-bin/rails assets:clobber
-bin/rails test:system || exit "Please fix tests"
+cd atv-test; bin/rails assets:clobber; bin/rails test:system || exit "Please fix tests"
+
+# Package for distribution
+
+cd -
+echo "/*global document, console, MutationObserver */" > atv-dist.js
+grep -v "^import" atv.js | grep -v "^export" >> atv-dist.js
+for f in atv/*.js; do
+  sed -e "/ATV/,\$!d" $f |
+  sed -e "/^export/,\$d" >> atv-dist.js
+done
+echo "export { activate, version };" >> atv-dist.js
+npx eslint atv-dist.js || quit "Please fix eslint for atv-dist.js"
+
 
 echo "Build succeeded"

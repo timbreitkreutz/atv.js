@@ -1,7 +1,7 @@
 /*jslint white, for*/
 
-// Pluralizer inspired by ActiveSupport inflections
-
+// ATV Pluralizer
+// Inspired by Rails Inflector
 // Used for target lists, assuming all targets will be lower case
 
 const irregularMap = {

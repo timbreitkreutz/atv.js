@@ -9,7 +9,7 @@ import { createController } from "atv/controller";
 import { refreshEvents } from "atv/event";
 import { stateMap } from "atv/state-map";
 
-// ATV/controller-manager
+// ATV Controller Manager
 //
 // Reponsible for managing all the instances of a given controller type,
 // E.g. <div data-atv-controller="my-controller">:

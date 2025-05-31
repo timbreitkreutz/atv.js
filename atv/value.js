@@ -1,9 +1,10 @@
 /*jslint white*/
-// ATV/value
+
+// ATV Value Manager
 //
 // Represents a value for a given controller.
 
-const matchers = {};
+const valueMatchers = {};
 const valueRegex = /values?/;
 
 function refreshValues(controllerManager, element, values) {
@@ -13,14 +14,14 @@ function refreshValues(controllerManager, element, values) {
 
   function dataMatcher() {
     const friendlyName = controllerName.replace(/-/g, "[-_]");
-    if (!matchers[matcherKey]) {
+    if (!valueMatchers[matcherKey]) {
       let parts = ["data[-_]", prefix];
       if (prefix) {
         parts.push(`[-_]${friendlyName}[-_]value[s]?`);
       }
-      matchers[matcherKey] = new RegExp(parts.join(""));
+      valueMatchers[matcherKey] = new RegExp(parts.join(""));
     }
-    return matchers[matcherKey];
+    return valueMatchers[matcherKey];
   }
 
   // Must preserve the original "values" object here.

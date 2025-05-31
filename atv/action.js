@@ -3,6 +3,10 @@ import { controllerFor } from "atv/controller-manager";
 import { dataPrefix } from "atv/utilities";
 import { parseActions } from "atv/action-parser";
 
+// ATV Action
+//
+// Responsible for processing ATV actions
+
 function actionSequence(prefix, element) {
   const matcher = new RegExp(`${dataPrefix(prefix)}[-_](.*)[_-]?actions?$`);
 

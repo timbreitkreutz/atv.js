@@ -1,7 +1,7 @@
 /*jslint white*/
 import { functionify } from "atv/utilities";
 
-// State Map
+// ATV State Maps
 // Responsible for storing state by nested keys of any type
 
 const allStateMaps = {};

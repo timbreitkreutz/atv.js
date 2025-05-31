@@ -3,7 +3,7 @@ import { refreshTargets } from "atv/target";
 import { refreshValues } from "atv/value";
 import { functionify } from "atv/utilities";
 
-// ATV/controller
+// ATV Controller
 //
 // This is the worker bee, a controller specifically attached
 // to a given dom element.

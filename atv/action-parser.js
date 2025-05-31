@@ -1,11 +1,13 @@
 /*jslint white*/
 /*global console*/
-// A recursive-descent parser for ATV acions
-
 import { isNumber, isQuote, isWord, underscore } from "atv/utilities";
 import { stateMap } from "atv/state-map";
 
-const actionMap = stateMap("parser-action", false);
+// ATV Action Parser
+//
+// A recursive-descent parser for ATV actions
+
+const actionMap = stateMap("parser-action");
 const tokenizer = new RegExp("(=>|->|[\\w]+[\\-\\w]+[\\w]|\\S)", "g");
 
 function parseActions(input, defaultController) {

@@ -2,7 +2,7 @@
 /*global document, MutationObserver*/
 import { underscore } from "atv/utilities";
 
-// ATV/importmap
+// ATV Import Map Manager
 //
 // Responsible for finding all the available ATV controllers
 // in the importmaps. Also provides a global list of all
