@@ -48,7 +48,7 @@ function act(prefix, element, incomingEventName, event) {
     if (finished || eventName !== incomingEventName) {
       return;
     }
-    const controller = controllerFor(prefix, controllerName, element);
+    const controller = controllerFor(prefix, element, controllerName);
     if (controller && controller.actions[method]) {
       if (!controller.actions[method](event.target, event, parameters)) {
         finished = true;

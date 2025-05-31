@@ -1,5 +1,4 @@
 /*jslint white*/
-/*global console*/
 
 const deCommaPattern = /,[\s+]/;
 const endsWithAtv = new RegExp("/-atv$/");

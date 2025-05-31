@@ -7,6 +7,7 @@ import {
 } from "atv/element-finder";
 import { createController } from "atv/controller";
 import { refreshEvents } from "atv/event";
+import { stateMap } from "atv/state-map";
 
 // ATV/controller-manager
 //
@@ -14,13 +15,8 @@ import { refreshEvents } from "atv/event";
 // E.g. <div data-atv-controller="my-controller">:
 // There will be one "manager" for "my" with the prefix "atv", responsible
 // for care and feeding of the controllers (worker bees).
-//
 
-const allControllers = new Map();
-
-function elementKey(prefix, controllerName) {
-  return `${prefix}:${controllerName}`;
-}
+const allControllers = stateMap("all-controllers");
 
 function createControllerManager(prefix) {
   const selector = controllerSelector(prefix);
@@ -35,12 +31,7 @@ function createControllerManager(prefix) {
   // Find outlets (provided to atv controllers as fourth connect parameter)
   function outlets(selector, controllerName, callback) {
     document.querySelectorAll(selector).forEach(function (element) {
-      const controllerList = allControllers.get(element);
-      if (!controllerList) {
-        return;
-      }
-      const key = elementKey(prefix, controllerName);
-      const controller = controllerList[key];
+      const controller = allControllers.get(prefix, element, controllerName);
       if (controller) {
         callback(controller);
       }
@@ -72,58 +63,70 @@ function createControllerManager(prefix) {
           selector,
           version
         };
+        // console.log(`NEW MANAGER`)
+        // console.log(managers[controllerName])
       }
     }
 
     function addOrUpdateControllers() {
-      const liveList = new Map();
+      const liveList = stateMap("liveList", false);
       allControllerElements(prefix).forEach(function ([
         controllerName,
         element
       ]) {
+        // console.log("AOUC")
+        // console.log(`${prefix} / ${controllerName}`);
+        // console.log(element);
         const manager = managers[controllerName];
+        // console.log("FOUND:")
+        // console.log(manager);
         if (!manager) {
           console.error(`ATV: Missing module: ${prefix}/${controllerName}`);
           return;
         }
         let controller = manager.controllers.get(element);
         if (controller?.disconnect) {
+          // console.log("DISCONNECTING OLD GUY")
           controller.disconnect();
           controller = undefined;
         }
-        const key = elementKey(prefix, controllerName);
         if (!controller) {
           const newController = createController(manager, element);
+          // console.log(`CREATED CONTROLLER for ${prefix}/${controllerName}`);
+          // console.log(newController);
           manager.controllers.set(element, newController);
-          if (!allControllers.has(element)) {
-            allControllers.set(element, {});
-          }
-          if (!allControllers.get(element)[key]) {
-            allControllers.get(element)[key] = newController;
-          }
+          allControllers.set(prefix, element, controllerName, newController);
+          // console.log(allControllers.get(prefix, element, controllerName))
         }
-        if (!liveList.has(element)) {
-          liveList.set(element, {});
-        }
-        liveList.get(element)[key] = true;
+        liveList.set(element, controllerName, true);
         controllerCount += 1;
       });
-      allControllers.keys().forEach(function (element) {
-        Object.keys(allControllers.get(element)).forEach(function (key) {
-          if (!key.startsWith(`${prefix}:`)) {
-            return;
-          }
-          if (liveList.get(element) && liveList.get(element)[key]) {
-            return;
-          }
-          const controller = allControllers.get(element)[key];
-          const disconnector = controller?.actions?.disconnect;
-          if (disconnector) {
-            controller.actions?.disconnect();
-          }
-          allControllers.get(element)[key] = undefined;
+      // console.log(...allControllers.get(prefix).keys());
+      allControllers
+        .get(prefix)
+        .keys()
+        .forEach(function (element) {
+          allControllers
+            .get(prefix, element)
+            .keys()
+            .forEach(function (controllerName) {
+              // console.log("LL")
+              // console.log(liveList);
+              if (liveList.get(element, controllerName)) {
+                // console.log("Still alive")
+                return;
+              }
+              const controller = allControllers.destroy(
+                prefix,
+                element,
+                controllerName
+              );
+              const disconnector = controller?.actions?.disconnect;
+              if (disconnector) {
+                disconnector();
+              }
+            });
         });
-      });
     }
 
     function refreshApplication() {
@@ -154,17 +157,17 @@ function createControllerManager(prefix) {
   return { refresh };
 }
 
-// Find the container contrller by prefix and name for element
-function controllerFor(prefix, controllerName, element) {
-  if (!element || element === document.body) {
+// Find the container controller by prefix and name for element
+function controllerFor(prefix, element, controllerName) {
+  if (element === undefined) {
     return;
   }
-  const controllerMap = allControllers.get(element);
-  const key = elementKey(prefix, controllerName);
-  if (controllerMap && controllerMap[key]) {
-    return controllerMap[key];
+  // console.log(allControllers)
+  const controller = allControllers.get(prefix, element, controllerName);
+  if (controller) {
+    return controller;
   }
-  return controllerFor(prefix, controllerName, element.parentNode);
+  return controllerFor(prefix, element.parentNode, controllerName);
 }
 
 export { controllerFor, createControllerManager };

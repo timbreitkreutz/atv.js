@@ -7,7 +7,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     aCount = page.find("#aCount")
     assert aCount.has_text? "Count 0"
     aCount.click
-    sleep 1
+    sleep 0.25
     assert aCount.has_text? "Count 1"
 
     mCount = page.find("#mCount")
@@ -172,7 +172,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     aCount = page.find("#aCount")
     assert aCount.has_text? "Count 0"
     aCount.click
-    sleep 1
+    sleep 0.25
     assert aCount.has_text? "Count 1"
 
     assert page.has_text?("Connected", count: 4)
@@ -199,7 +199,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     aCount = page.find("#aCount")
     assert aCount.has_text? "Count 0"
     aCount.click
-    sleep 1
+    sleep 0.25
     assert aCount.has_text? "Count 1"
 
     # Disconnect
