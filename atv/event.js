@@ -1,21 +1,18 @@
 /*jslint white*/
-import { distinctEventNamesFor, act } from "atv/action";
 import { allActionElements } from "atv/element-finder";
+import { distinctEventNamesFor, act } from "atv/action";
+import { stateMap } from "atv/state-map";
 
-// ATV
-const allHandlers = new Map();
+const allHandlers = stateMap("all-handlers");
 
 function refreshHandler(prefix, element, eventName) {
-  if (!allHandlers.get(element)) {
-    allHandlers.set(element, {});
-  }
-  if (allHandlers.get(element)[eventName]) {
+  if (allHandlers.get(prefix, element, eventName)) {
     return;
   }
   const handler = function (event) {
     act(prefix, element, eventName, event);
   };
-  allHandlers.get(element)[eventName] = handler;
+  allHandlers.set(prefix, element, eventName, () => handler);
   element.addEventListener(eventName, handler);
 }
 

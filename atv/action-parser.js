@@ -3,13 +3,14 @@
 // A recursive-descent parser for ATV acions
 
 import { isNumber, isQuote, isWord, underscore } from "atv/utilities";
+import { stateMap } from "atv/state-map";
 
-const actionMap = new Map();
+const actionMap = stateMap("parser-action", false);
 const tokenizer = new RegExp("(=>|->|[\\w]+[\\-\\w]+[\\w]|\\S)", "g");
 
 function parseActions(input, defaultController) {
-  if (actionMap.has([input, defaultController])) {
-    return actionMap.get([input, defaultController]);
+  if (actionMap.get(input, defaultController)) {
+    return actionMap.get(input, defaultController);
   }
   const tokens = input.match(tokenizer);
   let ii = 0;
@@ -143,7 +144,7 @@ function parseActions(input, defaultController) {
   }
 
   const result = parse();
-  actionMap.set([input, defaultController], result);
+  actionMap.set(input, defaultController, result);
   return result;
 }
 
