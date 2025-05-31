@@ -23,7 +23,7 @@ function createApplication(prefix) {
   return application;
 }
 
-const applications = stateMap("applications");
+const applications = stateMap();
 
 function activate(prefix = "atv") {
   prefix = `${prefix}`;

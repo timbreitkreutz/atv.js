@@ -4,68 +4,53 @@ import { functionify } from "atv/utilities";
 // ATV State Maps
 // Responsible for storing state by nested keys of any type
 
-const allStateMaps = {};
-
-const DESTROY = 0;
-const GET = 1;
-const INITIALIZE = 2;
-const SET = 3;
-
-function stateMap(name, sticky = true) {
-  let map;
-  if (sticky) {
-    if (!allStateMaps[name]) {
-      allStateMaps[name] = new Map();
-    }
-    map = allStateMaps[name];
-  } else {
-    map = new Map();
-  }
-
+function stateMap() {
   // A la Picard
-  function engage(theMap, params, action, value = undefined) {
+  function engage(map, params, action, value = undefined) {
     if (params.length === 0) {
       return undefined;
     }
     const firstKey = params[0];
-    let result = theMap.get(firstKey);
+    let result = map.get(firstKey);
     if (params.length === 1) {
       switch (action) {
-        case DESTROY:
-          result = theMap.get(firstKey);
-          theMap.delete(firstKey);
+        case "destroy":
+          result = map.get(firstKey);
+          map.delete(firstKey);
           return result;
-        case INITIALIZE:
-          if (!theMap.has(firstKey)) {
-            theMap.set(firstKey, functionify(value));
+        case "initialize":
+          if (!map.has(firstKey)) {
+            map.set(firstKey, functionify(value));
           }
           break;
-        case SET:
-          theMap.set(firstKey, functionify(value));
+        case "set":
+          map.set(firstKey, functionify(value));
           break;
       }
-      return theMap.get(firstKey);
+      return map.get(firstKey);
     }
-    if (!theMap.has(firstKey)) {
-      theMap.set(firstKey, new Map());
+    if (!map.has(firstKey)) {
+      map.set(firstKey, new Map());
     }
-    return engage(theMap.get(firstKey), params.slice(1), action, value);
+    return engage(map.get(firstKey), params.slice(1), action, value);
   }
 
+  const map = new Map();
+
   function initialize(...params) {
-    return engage(map, params, INITIALIZE, params.pop());
+    return engage(map, params, "initialize", params.pop());
   }
 
   function set(...params) {
-    return engage(map, params, SET, params.pop());
+    return engage(map, params, "set", params.pop());
   }
 
   function get(...params) {
-    return engage(map, params, GET);
+    return engage(map, params, "get");
   }
 
   function destroy(...params) {
-    return engage(map, params, DESTROY);
+    return engage(map, params, "destroy");
   }
 
   return {

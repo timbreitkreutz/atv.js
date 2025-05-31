@@ -10,7 +10,12 @@ done
 
 # All the Tests!
 
-cd atv-test; bin/rails assets:clobber; bin/rails test:system || exit "Please fix tests"
+cd atv-test
+
+sed -i -e "s/data-turbo=\"false\"/data-turbo=\"true\"/" app/views/layouts/application.html.erb
+bin/rails assets:clobber; bin/rails test:system || exit "Please fix tests"
+sed -i -e "s/data-turbo=\"true\"/data-turbo=\"false\"/" app/views/layouts/application.html.erb
+bin/rails assets:clobber; bin/rails test:system || exit "Please fix tests"
 
 # Package for distribution
 

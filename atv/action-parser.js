@@ -7,7 +7,7 @@ import { stateMap } from "atv/state-map";
 //
 // A recursive-descent parser for ATV actions
 
-const actionMap = stateMap("parser-action");
+const actionMap = stateMap();
 const tokenizer = new RegExp("(=>|->|[\\w]+[\\-\\w]+[\\w]|\\S)", "g");
 
 function parseActions(input, defaultController) {

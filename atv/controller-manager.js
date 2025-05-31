@@ -16,7 +16,7 @@ import { stateMap } from "atv/state-map";
 // There will be one "manager" for "my" with the prefix "atv", responsible
 // for care and feeding of the controllers (worker bees).
 
-const allControllers = stateMap("all-controllers");
+const allControllers = stateMap();
 
 function createControllerManager(prefix) {
   const selector = controllerSelector(prefix);
@@ -63,45 +63,33 @@ function createControllerManager(prefix) {
           selector,
           version
         };
-        // console.log(`NEW MANAGER`)
-        // console.log(managers[controllerName])
       }
     }
 
     function addOrUpdateControllers() {
-      const liveList = stateMap("liveList", false);
+      const liveList = stateMap();
       allControllerElements(prefix).forEach(function ([
         controllerName,
         element
       ]) {
-        // console.log("AOUC")
-        // console.log(`${prefix} / ${controllerName}`);
-        // console.log(element);
         const manager = managers[controllerName];
-        // console.log("FOUND:")
-        // console.log(manager);
         if (!manager) {
           console.error(`ATV: Missing module: ${prefix}/${controllerName}`);
           return;
         }
         let controller = manager.controllers.get(element);
         if (controller?.disconnect) {
-          // console.log("DISCONNECTING OLD GUY")
           controller.disconnect();
           controller = undefined;
         }
         if (!controller) {
           const newController = createController(manager, element);
-          // console.log(`CREATED CONTROLLER for ${prefix}/${controllerName}`);
-          // console.log(newController);
           manager.controllers.set(element, newController);
           allControllers.set(prefix, element, controllerName, newController);
-          // console.log(allControllers.get(prefix, element, controllerName))
         }
         liveList.set(element, controllerName, true);
         controllerCount += 1;
       });
-      // console.log(...allControllers.get(prefix).keys());
       allControllers
         .get(prefix)
         .keys()
@@ -110,10 +98,7 @@ function createControllerManager(prefix) {
             .get(prefix, element)
             .keys()
             .forEach(function (controllerName) {
-              // console.log("LL")
-              // console.log(liveList);
               if (liveList.get(element, controllerName)) {
-                // console.log("Still alive")
                 return;
               }
               const controller = allControllers.destroy(
@@ -162,7 +147,6 @@ function controllerFor(prefix, element, controllerName) {
   if (element === undefined) {
     return;
   }
-  // console.log(allControllers)
   const controller = allControllers.get(prefix, element, controllerName);
   if (controller) {
     return controller;

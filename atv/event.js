@@ -5,7 +5,7 @@ import { stateMap } from "atv/state-map";
 
 // ATV Event Handlers
 
-const allHandlers = stateMap("all-handlers");
+const allHandlers = stateMap();
 
 function refreshHandler(prefix, element, eventName) {
   if (allHandlers.get(prefix, element, eventName)) {

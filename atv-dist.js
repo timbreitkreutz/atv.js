@@ -34,7 +34,7 @@ const version = "0.2.0";
 //
 // A recursive-descent parser for ATV actions
 
-const actionMap = stateMap("parser-action");
+const actionMap = stateMap();
 const tokenizer = new RegExp("(=>|->|[\\w]+[\\-\\w]+[\\w]|\\S)", "g");
 
 function parseActions(input, defaultController) {
@@ -255,7 +255,7 @@ function createApplication(prefix) {
   return application;
 }
 
-const applications = stateMap("applications");
+const applications = stateMap();
 
 function activate(prefix = "atv") {
   prefix = `${prefix}`;
@@ -273,7 +273,7 @@ function activate(prefix = "atv") {
 // There will be one "manager" for "my" with the prefix "atv", responsible
 // for care and feeding of the controllers (worker bees).
 
-const allControllers = stateMap("all-controllers");
+const allControllers = stateMap();
 
 function createControllerManager(prefix) {
   const selector = controllerSelector(prefix);
@@ -320,45 +320,33 @@ function createControllerManager(prefix) {
           selector,
           version
         };
-        // console.log(`NEW MANAGER`)
-        // console.log(managers[controllerName])
       }
     }
 
     function addOrUpdateControllers() {
-      const liveList = stateMap("liveList", false);
+      const liveList = stateMap();
       allControllerElements(prefix).forEach(function ([
         controllerName,
         element
       ]) {
-        // console.log("AOUC")
-        // console.log(`${prefix} / ${controllerName}`);
-        // console.log(element);
         const manager = managers[controllerName];
-        // console.log("FOUND:")
-        // console.log(manager);
         if (!manager) {
           console.error(`ATV: Missing module: ${prefix}/${controllerName}`);
           return;
         }
         let controller = manager.controllers.get(element);
         if (controller?.disconnect) {
-          // console.log("DISCONNECTING OLD GUY")
           controller.disconnect();
           controller = undefined;
         }
         if (!controller) {
           const newController = createController(manager, element);
-          // console.log(`CREATED CONTROLLER for ${prefix}/${controllerName}`);
-          // console.log(newController);
           manager.controllers.set(element, newController);
           allControllers.set(prefix, element, controllerName, newController);
-          // console.log(allControllers.get(prefix, element, controllerName))
         }
         liveList.set(element, controllerName, true);
         controllerCount += 1;
       });
-      // console.log(...allControllers.get(prefix).keys());
       allControllers
         .get(prefix)
         .keys()
@@ -367,10 +355,7 @@ function createControllerManager(prefix) {
             .get(prefix, element)
             .keys()
             .forEach(function (controllerName) {
-              // console.log("LL")
-              // console.log(liveList);
               if (liveList.get(element, controllerName)) {
-                // console.log("Still alive")
                 return;
               }
               const controller = allControllers.destroy(
@@ -419,7 +404,6 @@ function controllerFor(prefix, element, controllerName) {
   if (element === undefined) {
     return;
   }
-  // console.log(allControllers)
   const controller = allControllers.get(prefix, element, controllerName);
   if (controller) {
     return controller;
@@ -584,7 +568,7 @@ function friendlySelector(selector) {
 
 // ATV Event Handlers
 
-const allHandlers = stateMap("all-handlers");
+const allHandlers = stateMap();
 
 function refreshHandler(prefix, element, eventName) {
   if (allHandlers.get(prefix, element, eventName)) {
@@ -729,68 +713,53 @@ function pluralize(word) {
 // ATV State Maps
 // Responsible for storing state by nested keys of any type
 
-const allStateMaps = {};
-
-const DESTROY = 0;
-const GET = 1;
-const INITIALIZE = 2;
-const SET = 3;
-
-function stateMap(name, sticky = true) {
-  let map;
-  if (sticky) {
-    if (!allStateMaps[name]) {
-      allStateMaps[name] = new Map();
-    }
-    map = allStateMaps[name];
-  } else {
-    map = new Map();
-  }
-
+function stateMap() {
   // A la Picard
-  function engage(theMap, params, action, value = undefined) {
+  function engage(map, params, action, value = undefined) {
     if (params.length === 0) {
       return undefined;
     }
     const firstKey = params[0];
-    let result = theMap.get(firstKey);
+    let result = map.get(firstKey);
     if (params.length === 1) {
       switch (action) {
-        case DESTROY:
-          result = theMap.get(firstKey);
-          theMap.delete(firstKey);
+        case "destroy":
+          result = map.get(firstKey);
+          map.delete(firstKey);
           return result;
-        case INITIALIZE:
-          if (!theMap.has(firstKey)) {
-            theMap.set(firstKey, functionify(value));
+        case "initialize":
+          if (!map.has(firstKey)) {
+            map.set(firstKey, functionify(value));
           }
           break;
-        case SET:
-          theMap.set(firstKey, functionify(value));
+        case "set":
+          map.set(firstKey, functionify(value));
           break;
       }
-      return theMap.get(firstKey);
+      return map.get(firstKey);
     }
-    if (!theMap.has(firstKey)) {
-      theMap.set(firstKey, new Map());
+    if (!map.has(firstKey)) {
+      map.set(firstKey, new Map());
     }
-    return engage(theMap.get(firstKey), params.slice(1), action, value);
+    return engage(map.get(firstKey), params.slice(1), action, value);
   }
 
+  const map = new Map();
+
   function initialize(...params) {
-    return engage(map, params, INITIALIZE, params.pop());
+    return engage(map, params, "initialize", params.pop());
   }
 
   function set(...params) {
-    return engage(map, params, SET, params.pop());
+    return engage(map, params, "set", params.pop());
   }
 
   function get(...params) {
-    return engage(map, params, GET);
+    return engage(map, params, "get");
   }
 
   function destroy(...params) {
-    return engage(map, params, DESTROY);
+    return engage(map, params, "destroy");
   }
 
   return {
