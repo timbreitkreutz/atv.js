@@ -1,6 +1,6 @@
 {
   "name": "@sbrew.com/atv",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "description": "Functional JS framework for Rails",
   "main": "atv.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "homepage": "https://sbrew.com/atv",
   "module": "atv.js",
   "files": [
-    "atv.js"
+    "atv-dist.js"
   ],
   "devDependencies": {
     "@eslint/js": "^9.14.0",
