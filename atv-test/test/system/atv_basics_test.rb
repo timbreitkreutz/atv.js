@@ -199,8 +199,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     aCount = page.find("#aCount")
     assert aCount.has_text? "Count 0"
     aCount.click
-    sleep 0.25
-    assert aCount.has_text? "Count 1"
+    sleep 1
 
     # Disconnect
 

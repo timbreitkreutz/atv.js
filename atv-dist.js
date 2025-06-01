@@ -30,7 +30,7 @@
 // THE SOFTWARE.
 
 const version = "0.2.0";
-// ATV Action Parser
+// ----------- atv/action-parser.js -----------
 //
 // A recursive-descent parser for ATV actions
 
@@ -177,7 +177,7 @@ function parseActions(input, defaultController) {
   return result;
 }
 
-// ATV Action
+// ----------- atv/action.js -----------
 //
 // Responsible for processing ATV actions
 
@@ -235,7 +235,7 @@ function act(prefix, element, incomingEventName, event) {
   });
 }
 
-// ATV Application
+// ----------- atv/application.js -----------
 //
 // Maintain list of applications in this top-level module
 //
@@ -266,7 +266,7 @@ function activate(prefix = "atv") {
   });
 }
 
-// ATV Controller Manager
+// ----------- atv/controller-manager.js -----------
 //
 // Reponsible for managing all the instances of a given controller type,
 // E.g. <div data-atv-controller="my-controller">:
@@ -411,7 +411,7 @@ function controllerFor(prefix, element, controllerName) {
   return controllerFor(prefix, element.parentNode, controllerName);
 }
 
-// ATV Controller
+// ----------- atv/controller.js -----------
 //
 // This is the worker bee, a controller specifically attached
 // to a given dom element.
@@ -452,7 +452,7 @@ function createController(controllerManager, element) {
   return controller;
 }
 
-// ATV Element Finder
+// ----------- atv/element-finder.js -----------
 //
 // Helpers to deal with finding things in the DOM
 
@@ -566,7 +566,7 @@ function friendlySelector(selector) {
     .join(",");
 }
 
-// ATV Event Handlers
+// ----------- atv/event.js -----------
 
 const allHandlers = stateMap();
 
@@ -589,7 +589,7 @@ function refreshEvents(prefix) {
   });
 }
 
-// ATV Import Map Manager
+// ----------- atv/importmap.js -----------
 //
 // Responsible for finding all the available ATV controllers
 // in the importmaps. Also provides a global list of all
@@ -657,7 +657,7 @@ function loadImportmap(complete) {
   setupDomWatcher();
 }
 
-// ATV Pluralizer
+// ----------- atv/pluralize.js -----------
 // Inspired by Rails Inflector
 // Used for target lists, assuming all targets will be lower case
 
@@ -710,7 +710,7 @@ function pluralize(word) {
   return `${word}s`;
 }
 
-// ATV State Maps
+// ----------- atv/state-map.js -----------
 // Responsible for storing state by nested keys of any type
 
 function stateMap() {
@@ -771,7 +771,7 @@ function stateMap() {
   };
 }
 
-// ATV Targets
+// ----------- atv/target.js -----------
 //
 // Responsible for keeping track of all the targets on the page
 
@@ -836,7 +836,7 @@ function refreshTargets(controllerManager, rootElement, targets) {
   rootElement.querySelectorAll(dataSelector()).forEach(updateTargets);
 }
 
-// ATV Various Utilities
+// ----------- atv/utilities.js -----------
 
 const deCommaPattern = /,[\s+]/;
 const isNumber = new RegExp("^-?\\d*[.]?\\d+$");
@@ -876,7 +876,7 @@ function functionify(value) {
   return value;
 }
 
-// ATV Value Manager
+// ----------- atv/value.js -----------
 //
 // Represents a value for a given controller.
 

@@ -23,7 +23,8 @@ cd -
 echo "/*global document, console, MutationObserver */" > atv-dist.js
 grep -v "^import" atv.js | grep -v "^export" >> atv-dist.js
 for f in atv/*.js; do
-  sed -e "/ATV/,\$!d" $f |
+  echo "// ----------- $f -----------" >> atv-dist.js
+  sed -e "1,/ATV/d" $f |
   sed -e "/^export/,\$d" >> atv-dist.js
 done
 echo "export { activate, version };" >> atv-dist.js
