@@ -143,6 +143,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
   test "events" do
     visit atv_by_example_path
     input = find("#name")
+    sleep 0.2
     input.native.send_keys("ab5533aa")
     assert_equal "abaa", input.value
   end

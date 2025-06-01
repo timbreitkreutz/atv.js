@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # All the Lints!
-for f in atv.js atv/*.js; do
+for f in atv-base.js atv/*.js; do
+  echo Linting $f
   node jslint.mjs $f
 
   npx eslint $f || quit "Please fix eslint"
@@ -20,15 +21,15 @@ bin/rails assets:clobber; bin/rails test:system || exit "Please fix tests"
 # Package for distribution
 
 cd -
-echo "/*global document, console, MutationObserver */" > atv-dist.js
-grep -v "^import" atv.js | grep -v "^export" >> atv-dist.js
+echo "/*global document, console, MutationObserver */" > atv.js
+grep -v "^import" atv-base.js | grep -v "^export" >> atv.js
 for f in atv/*.js; do
-  echo "// ----------- $f -----------" >> atv-dist.js
+  echo "// ----------- $f -----------" >> atv.js
   sed -e "1,/ATV/d" $f |
-  sed -e "/^export/,\$d" >> atv-dist.js
+  sed -e "/^export/,\$d" >> atv.js
 done
-echo "export { activate, version };" >> atv-dist.js
-npx eslint atv-dist.js || quit "Please fix eslint for atv-dist.js"
+echo "export { activate, version };" >> atv.js
+npx eslint atv.js || quit "Please fix eslint for distribution file for atv.js"
 
 
 echo "Build succeeded"

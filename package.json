@@ -24,7 +24,7 @@
   "homepage": "https://sbrew.com/atv",
   "module": "atv.js",
   "files": [
-    "atv-dist.js"
+    "atv.js"
   ],
   "devDependencies": {
     "@eslint/js": "^9.14.0",
