@@ -1,3 +1,9 @@
+## Version 0.2.0
+
+* Rewrite from ground up with new modules in separate files
+* Breaking change:  String parameters to actions need to be quoted
+* No longer triggers added or removed callbacks for targets. LMK if you need it, I can add it!
+
 ## Version 0.1.5-0.1.10
 
 * Major refactor-- new tests added, all previous tests still pass
