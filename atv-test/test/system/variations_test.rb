@@ -7,7 +7,7 @@ class VariationsTest < ApplicationSystemTestCase
     page.all(".multi-button-1").each do |button|
       assert_equal "Count 0", button.text
       button.click
-      sleep 0.25
+      sleep 0.5
       assert_equal "Count 1", button.text
     end
 
