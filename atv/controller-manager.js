@@ -92,8 +92,8 @@ function createControllerManager(prefix) {
       });
       allControllers
         .get(prefix)
-        .keys()
-        .forEach(function (element) {
+        ?.keys()
+        ?.forEach(function (element) {
           allControllers
             .get(prefix, element)
             .keys()
