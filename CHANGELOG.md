@@ -2,7 +2,7 @@
 
 * Rewrite from ground up with new modules in separate files
 * Breaking changes:  String parameters to actions need to be quoted
-* Now ATV uses a pluralizer for more than one targets, so for example, if you have several targets called "mouse", you need to access them with `targets.mice`.
+* Now ATV uses a pluralizer for target lists, so for example, if you have several targets called "mouse", you need to access them with `targets.mice`.
 * No longer triggers added or removed callbacks for targets. LMK if you need it, I can add it!
 
 ## Version 0.1.5-0.1.10
