@@ -1,3 +1,7 @@
+## Version 0.2.1
+
+* Small bugfix release
+
 ## Version 0.2.0
 
 * Rewrite from ground up with new modules in separate files
