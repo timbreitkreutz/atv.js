@@ -16,7 +16,9 @@ function stateMap() {
       switch (action) {
         case "destroy":
           result = map.get(firstKey);
-          map.delete(firstKey);
+          if (result) {
+            map.delete(firstKey);
+          }
           return result;
         case "initialize":
           if (!map.has(firstKey)) {
