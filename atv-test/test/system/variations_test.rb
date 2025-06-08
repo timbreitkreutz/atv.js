@@ -3,6 +3,7 @@ require "application_system_test_case"
 class VariationsTest < ApplicationSystemTestCase
   test "finders" do
     visit atv_variations_path
+    sleep 1
 
     page.all(".multi-button-1").each do |button|
       assert_equal "Count 0", button.text

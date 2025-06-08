@@ -1,7 +1,7 @@
 require "application_system_test_case"
 
 class UnitTest < ApplicationSystemTestCase
-  VERSION = "ATV v0.2.0"
+  VERSION = "ATV v0.2.2"
 
   test "dasherize" do
     visit unit_test_path

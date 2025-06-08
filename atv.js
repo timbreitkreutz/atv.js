@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.2.0";
+const version = "0.2.2";
 // ----------- atv/action-parser.js -----------
 //
 // A recursive-descent parser for ATV actions
@@ -349,12 +349,12 @@ function createControllerManager(prefix) {
       });
       allControllers
         .get(prefix)
-        .keys()
-        .forEach(function (element) {
+        ?.keys()
+        ?.forEach(function (element) {
           allControllers
             .get(prefix, element)
-            .keys()
-            .forEach(function (controllerName) {
+            ?.keys()
+            ?.forEach(function (controllerName) {
               if (liveList.get(element, controllerName)) {
                 return;
               }

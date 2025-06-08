@@ -96,8 +96,8 @@ function createControllerManager(prefix) {
         ?.forEach(function (element) {
           allControllers
             .get(prefix, element)
-            .keys()
-            .forEach(function (controllerName) {
+            ?.keys()
+            ?.forEach(function (controllerName) {
               if (liveList.get(element, controllerName)) {
                 return;
               }
