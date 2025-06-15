@@ -8,11 +8,7 @@ import { allControllerNames } from "atv/importmap";
 // Helpers to deal with finding things in the DOM
 
 function rawSelector(prefix, type) {
-  let dashPrefix = "";
-  if (prefix) {
-    dashPrefix = `${prefix}-`;
-  }
-  return ["data-", dashPrefix, type].join("");
+  return ["data-", prefix ? `${prefix}-` : "", type].join("");
 }
 
 function allControllerElements(prefix) {

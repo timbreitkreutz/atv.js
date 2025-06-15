@@ -1,6 +1,6 @@
 /*jslint white*/
 import { controllerFor } from "atv/controller-manager";
-import { dataPrefix } from "atv/utilities";
+import { dataPrefix, trailingDash } from "atv/utilities";
 import { parseActions } from "atv/action-parser";
 
 // ATV Action
@@ -15,7 +15,7 @@ function actionSequence(prefix, element) {
   element.getAttributeNames().forEach(function (attributeName) {
     const match = attributeName.match(matcher);
     if (match) {
-      const defaultController = match[1].replace(/[\-_]$/, "");
+      const defaultController = match[1].replace(trailingDash, "");
       const concatenate = function (action) {
         parsed = parsed.concat(parseActions(action, defaultController));
       };

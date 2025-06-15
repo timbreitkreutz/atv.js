@@ -189,7 +189,7 @@ function actionSequence(prefix, element) {
   element.getAttributeNames().forEach(function (attributeName) {
     const match = attributeName.match(matcher);
     if (match) {
-      const defaultController = match[1].replace(/[\-_]$/, "");
+      const defaultController = match[1].replace(trailingDash, "");
       const concatenate = function (action) {
         parsed = parsed.concat(parseActions(action, defaultController));
       };
@@ -457,11 +457,7 @@ function createController(controllerManager, element) {
 // Helpers to deal with finding things in the DOM
 
 function rawSelector(prefix, type) {
-  let dashPrefix = "";
-  if (prefix) {
-    dashPrefix = `${prefix}-`;
-  }
-  return ["data-", dashPrefix, type].join("");
+  return ["data-", prefix ? `${prefix}-` : "", type].join("");
 }
 
 function allControllerElements(prefix) {
@@ -607,7 +603,7 @@ function importMap() {
 // for a given prefix. The callback receives a set of fully
 // instantiated ES6 modules and will complete initialization.
 function loadImportmap(complete) {
-  const importMapper = new RegExp("^controllers\/(.*)[-_]atv$");
+  const importMapper = new RegExp(`^controllers/(.*)[-_]atv$`);
   const moduleDefinitions = [];
 
   function reloadModules() {
@@ -725,7 +721,9 @@ function stateMap() {
       switch (action) {
         case "destroy":
           result = map.get(firstKey);
-          map.delete(firstKey);
+          if (result) {
+            map.delete(firstKey);
+          }
           return result;
         case "initialize":
           if (!map.has(firstKey)) {
@@ -843,6 +841,7 @@ const isNumber = new RegExp("^-?\\d*[.]?\\d+$");
 const isQuote = new RegExp("[\"']");
 const isWord = new RegExp("\\w+");
 const underscore = new RegExp("[_]", "g");
+const trailingDash = new RegExp("[-_]$");
 
 function attributesFor(element, type) {
   return attributeKeysFor(element, type).map(function (name) {

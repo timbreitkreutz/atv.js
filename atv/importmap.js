@@ -20,7 +20,7 @@ function importMap() {
 // for a given prefix. The callback receives a set of fully
 // instantiated ES6 modules and will complete initialization.
 function loadImportmap(complete) {
-  const importMapper = new RegExp(`^controllers\/(.*)[-_]atv$`);
+  const importMapper = new RegExp(`^controllers/(.*)[-_]atv$`);
   const moduleDefinitions = [];
 
   function reloadModules() {

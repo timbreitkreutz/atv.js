@@ -7,6 +7,7 @@ const isNumber = new RegExp("^-?\\d*[.]?\\d+$");
 const isQuote = new RegExp("[\"']");
 const isWord = new RegExp("\\w+");
 const underscore = new RegExp("[_]", "g");
+const trailingDash = new RegExp("[-_]$");
 
 function attributesFor(element, type) {
   return attributeKeysFor(element, type).map(function (name) {
@@ -49,5 +50,6 @@ export {
   isNumber,
   isQuote,
   isWord,
+  trailingDash,
   underscore
 };
