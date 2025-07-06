@@ -728,11 +728,10 @@ function stateMap() {
       return undefined;
     }
     const firstKey = params[0];
-    let result = map.get(firstKey);
     if (params.length === 1) {
+      const result = map.get(firstKey);
       switch (action) {
         case "destroy":
-          result = map.get(firstKey);
           if (result) {
             map.delete(firstKey);
           }
