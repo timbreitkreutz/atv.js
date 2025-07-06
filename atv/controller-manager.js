@@ -66,7 +66,8 @@ function createControllerManager(prefix) {
       }
     }
 
-    function addOrUpdateControllers() {
+    function refreshAllControllers() {
+      // First find all controllers that are still in the DOM as of now
       const liveList = stateMap();
       allControllerElements(prefix).forEach(function ([
         controllerName,
@@ -78,18 +79,17 @@ function createControllerManager(prefix) {
           return;
         }
         let controller = manager.controllers.get(element);
-        if (controller?.disconnect) {
-          controller.disconnect();
-          controller = undefined;
-        }
         if (!controller) {
-          const newController = createController(manager, element);
-          manager.controllers.set(element, newController);
-          allControllers.set(prefix, element, controllerName, newController);
+          controller = createController(manager, element);
+          manager.controllers.set(element, controller);
+          allControllers.set(prefix, element, controllerName, controller);
+        } else {
+          controller.refresh();
         }
         liveList.set(element, controllerName, true);
         controllerCount += 1;
       });
+      // Now clean up after those no longer there
       allControllers
         .get(prefix)
         ?.keys()
@@ -106,16 +106,13 @@ function createControllerManager(prefix) {
                 element,
                 controllerName
               );
-              const disconnector = controller?.actions?.disconnect;
-              if (disconnector) {
-                disconnector();
-              }
+              controller?.disconnect();
             });
         });
     }
 
     function refreshApplication() {
-      addOrUpdateControllers();
+      refreshAllControllers();
       refreshEvents(prefix);
     }
 

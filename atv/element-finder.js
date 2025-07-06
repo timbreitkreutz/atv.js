@@ -7,8 +7,14 @@ import { allControllerNames } from "atv/importmap";
 //
 // Helpers to deal with finding things in the DOM
 
-function rawSelector(prefix, type) {
-  return ["data-", prefix ? `${prefix}-` : "", type].join("");
+function rawSelector(...items) {
+  let selector = "data";
+  items.forEach(function (item) {
+    if (item) {
+      selector = `${selector}-${item}`;
+    }
+  });
+  return selector;
 }
 
 function allControllerElements(prefix) {

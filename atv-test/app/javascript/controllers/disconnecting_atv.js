@@ -20,7 +20,11 @@ function connect(_targets, values, root) {
         console.log(`disconnect ${id}`)
         messageSpan.innerText = "Disconnected";
         messageSpan.style.color = "black"
-      }
+      },
+      oneTargetDisconnected: () => console.log("DISCONNECT ONE"),
+      twoTargetDisconnected: () => console.log("DISCONNECT TWO"),
+      oneTargetConnected: () => console.log("CONN ONE"),
+      twoTargetConnected: () => console.log("CONN TWO"),
     };
   };
 }

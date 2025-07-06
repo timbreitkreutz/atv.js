@@ -19,6 +19,7 @@ function connect(targets) {
       console.log(target);
       window.target = target;
       target.innerHTML = "Added New Target";
+      console.log(targets);
     },
     newTargetDisconnected: function(target) {
       console.log("--------------NEW TargetDisconnected")

@@ -2,36 +2,32 @@ require "application_system_test_case"
 
 class DomTest < ApplicationSystemTestCase
   test "adding a target" do
-    skip "for now"
     visit atv_by_example_path
-    assert_not page.has_text?("Added New Target")
+    assert page.has_text?("Added New Target", count: 1)
     assert page.has_css?("#simple-controller")
 
     js = <<~JS
       (function() {
         const controller = document.getElementById("simple-controller");
-        controller.insertAdjacentHTML("beforeend", '<div data-atv-simple-target="here, new"></div>');
+        controller.insertAdjacentHTML("beforeend", '<div data-atv-simple-target="here, new">XXX</div>');
       })();
     JS
     result = page.evaluate_script(js)
-    assert page.has_text?("Added New Target")
+    assert page.has_text?("Added New Target", count:2)
   end
 
   test "removing a target" do
-    skip "for now"
     visit atv_by_example_path
-    assert_not page.has_text?("STATE IS DISCONNECTED Connected 1")
+    assert_not page.has_text?("STATE IS DISCONNECTED Connected")
     assert page.has_css?("#simple-controller")
-
     js = <<~JS
       document.querySelector(".connect-button-2").remove();
     JS
     result = page.evaluate_script(js)
-    assert page.has_text?("STATE IS DISCONNECTED Connected 1")
+    assert page.has_text?("STATE IS DISCONNECTED Connected")
   end
 
   test "adding and removing multiples" do
-    skip "for now"
     visit atv_by_example_path
 
     page.evaluate_script <<~JS
@@ -47,9 +43,19 @@ class DomTest < ApplicationSystemTestCase
         document.querySelector(".multi")?.remove();
       })();
     JS
-    6.downto(1).each do |ii|
-      result = page.evaluate_script(js)
-      assert page.has_text?("Count Is: #{ii}")
-    end
+
+    assert page.has_text?("Count Is: 6")
+    page.evaluate_script(js)
+    assert page.has_text?("Count Is: 5")
+    page.evaluate_script(js)
+    assert page.has_text?("Count Is: 4")
+    page.evaluate_script(js)
+    assert page.has_text?("Count Is: 3")
+    page.evaluate_script(js)
+    assert page.has_text?("Count Is: 2")
+    page.evaluate_script(js)
+    assert page.has_text?("Count Is: 1")
+    page.evaluate_script(js)
+    assert page.has_text?("Count Is: 0")
   end
 end

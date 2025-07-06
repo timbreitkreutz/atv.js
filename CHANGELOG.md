@@ -1,3 +1,9 @@
+## Version 0.2.3
+
+* Re-introduce target add and remove events
+* Tighten up target management
+* Now passes all tests from 0.0 and 0.1 releases
+
 ## Version 0.2.1-0.2.2
 
 * Small bugfix release

@@ -23,6 +23,12 @@ function attributeKeysFor(element, type) {
   return element.getAttributeNames().filter((name) => regex.test(name));
 }
 
+const camelizer = new RegExp("[-_][a-z]", "g");
+
+function camelize(str) {
+  return str.replace(camelizer, (ignore, char) => char.toUpperCase());
+}
+
 function dasherize(string) {
   return string.replace(/_/g, "-");
 }
@@ -43,6 +49,7 @@ function functionify(value) {
 
 export {
   attributesFor,
+  camelize,
   dasherize,
   dataPrefix,
   deCommaPattern,

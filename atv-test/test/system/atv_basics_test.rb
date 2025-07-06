@@ -226,6 +226,7 @@ class AtvBasicsTest < ApplicationSystemTestCase
     assert_equal "abaaabaa", input.value
 
     aCount.click
+    sleep 1
     assert aCount.has_text? "Count 2"
   end
 end

@@ -84,10 +84,8 @@ Right now all the features of ATV can be seen in action at [ATV By Example](http
 * Automated tests around reloading the whole page
 
 If there's demand, the following things might get added:
-* Namespaced controllers (i.e. `controllers/domain/do_the_thing_atv.js`)
 * Something closer to the 'window' events of stimulus
 * Broken out values, vs a single JSON attribute
-* Ability to modify attributes in the DOM and pick up the changes, e.g. new targets added or removed dynamically to existing elements
 
 ## Contributing
 

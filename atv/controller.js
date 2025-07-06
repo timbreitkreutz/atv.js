@@ -11,10 +11,11 @@ import { functionify } from "atv/utilities";
 function createController(controllerManager, element) {
   const targets = {}; // Exposed to ATV controller code
   const values = {}; // Exposed to ATV controller code
-  const prefix = controllerManager.prefix;
+  const { controllerName, prefix } = controllerManager;
 
   // Used to update controllers if importmap is changed to a new cache name
   const controller = {
+    controllerName,
     element,
     moduleVersion: controllerManager.version,
     prefix,
@@ -23,14 +24,19 @@ function createController(controllerManager, element) {
   };
 
   // Update or find associated targets and values
-  function refresh() {
+  controller.refresh = function () {
     refreshValues(controllerManager, element, values);
-    refreshTargets(controllerManager, element, targets);
-  }
+    refreshTargets(controller);
+  };
 
-  controller.refresh = refresh;
+  // First pass, controllers and events
+  controller.refresh();
 
-  refresh();
+  controller.disconnect = function () {
+    if (controller.actions?.disconnect) {
+      controller.actions.disconnect();
+    }
+  };
 
   // This is where the actual connection to the controller instance happens
   const result = controllerManager.module.connect(
@@ -40,6 +46,9 @@ function createController(controllerManager, element) {
     controllerManager.outlets
   );
   controller.actions = functionify(result);
+
+  // Second pass, with actions
+  controller.refresh();
 
   return controller;
 }

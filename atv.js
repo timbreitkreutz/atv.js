@@ -29,7 +29,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-const version = "0.2.2";
+const version = "0.2.3";
 // ----------- atv/action-parser.js -----------
 //
 // A recursive-descent parser for ATV actions
@@ -323,7 +323,8 @@ function createControllerManager(prefix) {
       }
     }
 
-    function addOrUpdateControllers() {
+    function refreshAllControllers() {
+      // First find all controllers that are still in the DOM as of now
       const liveList = stateMap();
       allControllerElements(prefix).forEach(function ([
         controllerName,
@@ -335,18 +336,17 @@ function createControllerManager(prefix) {
           return;
         }
         let controller = manager.controllers.get(element);
-        if (controller?.disconnect) {
-          controller.disconnect();
-          controller = undefined;
-        }
         if (!controller) {
-          const newController = createController(manager, element);
-          manager.controllers.set(element, newController);
-          allControllers.set(prefix, element, controllerName, newController);
+          controller = createController(manager, element);
+          manager.controllers.set(element, controller);
+          allControllers.set(prefix, element, controllerName, controller);
+        } else {
+          controller.refresh();
         }
         liveList.set(element, controllerName, true);
         controllerCount += 1;
       });
+      // Now clean up after those no longer there
       allControllers
         .get(prefix)
         ?.keys()
@@ -363,16 +363,13 @@ function createControllerManager(prefix) {
                 element,
                 controllerName
               );
-              const disconnector = controller?.actions?.disconnect;
-              if (disconnector) {
-                disconnector();
-              }
+              controller?.disconnect();
             });
         });
     }
 
     function refreshApplication() {
-      addOrUpdateControllers();
+      refreshAllControllers();
       refreshEvents(prefix);
     }
 
@@ -419,10 +416,11 @@ function controllerFor(prefix, element, controllerName) {
 function createController(controllerManager, element) {
   const targets = {}; // Exposed to ATV controller code
   const values = {}; // Exposed to ATV controller code
-  const prefix = controllerManager.prefix;
+  const { controllerName, prefix } = controllerManager;
 
   // Used to update controllers if importmap is changed to a new cache name
   const controller = {
+    controllerName,
     element,
     moduleVersion: controllerManager.version,
     prefix,
@@ -431,14 +429,19 @@ function createController(controllerManager, element) {
   };
 
   // Update or find associated targets and values
-  function refresh() {
+  controller.refresh = function () {
     refreshValues(controllerManager, element, values);
-    refreshTargets(controllerManager, element, targets);
-  }
+    refreshTargets(controller);
+  };
 
-  controller.refresh = refresh;
+  // First pass, controllers and events
+  controller.refresh();
 
-  refresh();
+  controller.disconnect = function () {
+    if (controller.actions?.disconnect) {
+      controller.actions.disconnect();
+    }
+  };
 
   // This is where the actual connection to the controller instance happens
   const result = controllerManager.module.connect(
@@ -449,6 +452,9 @@ function createController(controllerManager, element) {
   );
   controller.actions = functionify(result);
 
+  // Second pass, with actions
+  controller.refresh();
+
   return controller;
 }
 
@@ -456,8 +462,14 @@ function createController(controllerManager, element) {
 //
 // Helpers to deal with finding things in the DOM
 
-function rawSelector(prefix, type) {
-  return ["data-", prefix ? `${prefix}-` : "", type].join("");
+function rawSelector(...items) {
+  let selector = "data";
+  items.forEach(function (item) {
+    if (item) {
+      selector = `${selector}-${item}`;
+    }
+  });
+  return selector;
 }
 
 function allControllerElements(prefix) {
@@ -775,14 +787,19 @@ function stateMap() {
 
 const targetMatchers = {};
 const targetSelectors = {};
+const allConnectedTargets = stateMap();
 
-function refreshTargets(controllerManager, rootElement, targets) {
-  const controllerName = controllerManager.controllerName;
-  const prefix = controllerManager.prefix;
+function refreshTargets(controller) {
+  const { actions, controllerName, prefix, targets } = controller;
+  if (!actions) {
+    return;
+  }
+  const rootElement = controller.element;
   let matcherKey = controllerName;
   if (prefix) {
     matcherKey = `${prefix}-${controllerName}`;
   }
+  const liveList = new Set();
 
   function dataMatcher() {
     if (!targetMatchers[matcherKey]) {
@@ -805,10 +822,6 @@ function refreshTargets(controllerManager, rootElement, targets) {
     return targetSelectors[matcherKey];
   }
 
-  Object.keys(targets).forEach(function (key) {
-    delete targets[key];
-  });
-
   function updateTargets(element) {
     if (outOfScope(element, rootElement, controllerName, prefix)) {
       return;
@@ -817,21 +830,60 @@ function refreshTargets(controllerManager, rootElement, targets) {
       if (dataMatcher().test(attributeName)) {
         const parsed = element.getAttribute(attributeName);
         parsed.split(/[\s]*,[\s]*/).forEach(function (key) {
+          liveList.add(element);
+          if (allConnectedTargets.get(controller, element, key)) {
+            return;
+          }
           const pluralKey = pluralize(key);
           if (targets[pluralKey]?.includes(element)) {
             return;
           }
+          allConnectedTargets.set(controller, element, key, true);
           targets[key] = element;
           if (!targets[pluralKey]) {
             targets[pluralKey] = [];
           }
           targets[pluralKey].push(element);
+          const connectAction = `${camelize(key)}TargetConnected`;
+          if (actions[connectAction]) {
+            actions[connectAction](element);
+          }
         });
       }
     });
   }
   updateTargets(rootElement);
   rootElement.querySelectorAll(dataSelector()).forEach(updateTargets);
+
+  // prune out targets no longer there.
+  if (targets) {
+    Object.keys(targets).forEach(function (key) {
+      const pluralKey = pluralize(key);
+      const targetList = targets[pluralKey];
+      if (!Array.isArray(targetList)) {
+        return;
+      }
+      targetList.forEach(function (element) {
+        if (!liveList.has(element)) {
+          allConnectedTargets.destroy(controller, element, key);
+          if (targets[pluralKey].length === 0) {
+            delete targets[pluralKey];
+            delete targets[key];
+          } else {
+            const index = targets[pluralKey].indexOf(element);
+            targets[pluralKey].splice(index, 1);
+            if (targets[key] === element) {
+              targets[key] = targets[pluralKey][0];
+            }
+          }
+          const disconnectAction = `${camelize(key)}TargetDisconnected`;
+          if (actions[disconnectAction]) {
+            actions[disconnectAction](element);
+          }
+        }
+      });
+    });
+  }
 }
 
 // ----------- atv/utilities.js -----------
@@ -855,6 +907,12 @@ function attributeKeysFor(element, type) {
   }
   const regex = new RegExp(`${type}s?$`, "i");
   return element.getAttributeNames().filter((name) => regex.test(name));
+}
+
+const camelizer = new RegExp("[-_][a-z]", "g");
+
+function camelize(str) {
+  return str.replace(camelizer, (ignore, char) => char.toUpperCase());
 }
 
 function dasherize(string) {
