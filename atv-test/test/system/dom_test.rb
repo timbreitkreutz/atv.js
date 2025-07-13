@@ -13,7 +13,7 @@ class DomTest < ApplicationSystemTestCase
       })();
     JS
     result = page.evaluate_script(js)
-    assert page.has_text?("Added New Target", count:2)
+    assert page.has_text?("Added New Target", count: 2)
   end
 
   test "removing a target" do
