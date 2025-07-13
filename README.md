@@ -112,3 +112,4 @@ If you like this idea and want to help out please join or start a discussion her
 
 [![0 dependencies!](https://0dependencies.dev/0dependencies.svg)](https://0dependencies.dev)
 [![Vanilla JS!](http://vanilla-js.com/assets/button.png)](http://vanilla-js.com)
+[![Ruby on Rails CI](https://github.com/timbreitkreutz/atv.js/actions/workflows/build.yml/badge.svg)](https://github.com/timbreitkreutz/atv.js/actions/workflows/build.yml)
