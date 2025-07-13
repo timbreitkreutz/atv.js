@@ -33,7 +33,7 @@ class UnitTest < ApplicationSystemTestCase
         "one_two_three", "one_two_threes" ],
       [ "one-two" ] => [ "one-two", "one-twos", "one_two", "one_twos" ],
       [ "one" ] => [ "one", "ones" ],
-      [ "" ] => [],
+      [ "" ] => []
     }
 
     assert page.has_text?(VERSION)
