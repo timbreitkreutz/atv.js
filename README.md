@@ -1,5 +1,8 @@
 ![atv-sm](https://github.com/user-attachments/assets/2d7657c1-0e41-49e1-93a3-6394f49fcf74)
 
+[![Ruby on Rails CI](https://github.com/timbreitkreutz/atv.js/actions/workflows/build.yml/badge.svg)](https://github.com/timbreitkreutz/atv.js/actions/workflows/build.yml)
+[![0 dependencies!](https://0dependencies.dev/0dependencies.svg)](https://0dependencies.dev)
+[![Vanilla JS!](http://vanilla-js.com/assets/button.png)](http://vanilla-js.com)
 
 # atv.js
 Lightweight JavaScript for Rails inspired by Stimulus.js; minifies to under 8,000 bytes.
@@ -109,7 +112,10 @@ If you like this idea and want to help out please join or start a discussion her
     * `npx prettier --trailing-comma none atv.js --write`
 * Some new-ish JavaScript idioms are avoided on purpose for one slightly older browser I have to support for now, e.g. the ... operator.  Soon.
 
+## AI disclosure
 
-[![0 dependencies!](https://0dependencies.dev/0dependencies.svg)](https://0dependencies.dev)
-[![Vanilla JS!](http://vanilla-js.com/assets/button.png)](http://vanilla-js.com)
-[![Ruby on Rails CI](https://github.com/timbreitkreutz/atv.js/actions/workflows/build.yml/badge.svg)](https://github.com/timbreitkreutz/atv.js/actions/workflows/build.yml)
+Generative AI tools were used for the following, everything else was written by a human:
+
+* ATV logo
+* First partial draft of `action-parser.js`.
+
