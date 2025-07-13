@@ -28,9 +28,9 @@ class UnitTest < ApplicationSystemTestCase
     visit unit_test_path
 
     tests = {
-      [ "one-two-three" ] => ["one-two-three", "one-two-threes", "one-two_three",
+      [ "one-two-three" ] => [ "one-two-three", "one-two-threes", "one-two_three",
         "one-two_threes", "one_two-three", "one_two-threes",
-        "one_two_three", "one_two_threes"],
+        "one_two_three", "one_two_threes" ],
       [ "one-two" ] => [ "one-two", "one-twos", "one_two", "one_twos" ],
       [ "one" ] => [ "one", "ones" ],
       [ "" ] => [],
