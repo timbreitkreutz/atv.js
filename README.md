@@ -5,7 +5,7 @@
 [![Vanilla JS!](http://vanilla-js.com/assets/button.png)](http://vanilla-js.com)
 
 # atv.js
-Lightweight JavaScript for Rails inspired by Stimulus.js; minifies to under 8,000 bytes.
+Lightweight JavaScript for Rails inspired by Stimulus.js; compresses to under 4,000 bytes.
 
 Do you just want to have actions, targets, and values available in your Rails JS controllers? Tired of messing around with `this` and `bind` and the other bad parts of JavaScript?
 
@@ -89,11 +89,13 @@ Right now all the features of ATV can be seen in action at [ATV By Example](http
 If there's demand, the following things might get added:
 * Something closer to the 'window' events of stimulus
 * Broken out values, vs a single JSON attribute
+* Ability to extend the pluralizer
 
 ## Contributing
 
 ATV is still a young project.
 This incarnation started afresh in August, 2024 after a couple of previous sketches and prototypes were thrown out.
+It has since been refactored from scratch twice, last time in April/May 2025.
 
 If you like this idea and want to help out please join or start a discussion here on the GitHub page. I'm looking for like minded rails fans who also are striving to do clean, minimalist JavaScript along the lines of Douglas Crockford (JavaScript--The Good Parts).
 
